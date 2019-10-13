@@ -1,0 +1,35 @@
+
+
+
+Archive Code:
+
+create table if not exists movieinfostwo(
+boxoffice string, director string, genre string, intheatre string, ondisc string, rating string, runtime string,
+studio string, writtenby string, audiencerating string, critics string,
+title string, tomatometer string, url string, userrating string)
+row format delimited
+fields terminated by ','
+location '/user/hadoop/data_mining'
+tblproperties("skip.header.line.count"="1");
+
+
+load data local inpath 'C:\Users\jy\Desktop\DataMiningProject\DataAcquisition\movie_info.csv' overwrite into table movieinfostwo;
+
+
+create table if not exists movieinfosthree(
+boxoffice string, director string, genre string, intheatre string, ondisc string, rating string, runtime string,
+studio string, writtenby string, audiencerating string, critics string,
+title string, tomatometer string, url string, userrating string)
+fields terminated by ','
+location '/user/hadoop/data_mining'
+tblproperties("skip.header.line.count"="1");
+
+
+create table if not exists movieinfosb(
+boxoffice string, director string, genre string, intheatre string, ondisc string, rating string, runtime string,
+studio string, writtenby string, audiencerating string, critics string,
+title string, tomatometer string, url string, userrating string)
+location '/user/hadoop/data_mining'
+tblproperties("skip.header.line.count"="1");
+
+load data local inpath 'C:\Users\jy\Desktop\DataMiningProject\DataAcquisition\movie_info.csv' overwrite into table movieinfosb;
