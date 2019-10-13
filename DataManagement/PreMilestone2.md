@@ -1,5 +1,9 @@
 # Installation Guide for Hadoop and Hive
 
+**Important Note**
+*always open command prompt as administrator*
+*restart command prompt after editing the environment variables*  
+  
 Operating System: Windows 10 64-bit
 
 ## Java
@@ -79,6 +83,11 @@ Note: The path of namenode and datanode across value would be the path of the da
 </configuration>
 ```
 
+4b. Format namenode
+```
+hadoop namenode -format
+```
+
 5. Edit the file yarn-site.xml and add below property in the configuration
 ```
 <configuration>
@@ -125,13 +134,13 @@ start-yarn.cmd
 1. Download Hive (apache-hive-2.1.0-bin.tar.gz)
   - <https://archive.apache.org/dist/hive/hive-2.1.0/>
 
-2. Download hive-site.xml
+2. Extract twice 
+
+3. Move apache-hive-2.1.0-bin folder to C:\apache-hive-2.1.0-bin\
+
+4. Download hive-site.xml
   - <https://drive.google.com/file/d/1qqAo7RQfr5Q6O-GTom6Rji3TdufP81zd/view>
-
-3. Extract twice 
-
-4. Move apache-hive-2.1.0-bin folder to C:\apache-hive-2.1.0-bin\
-
+  
 5. Copy hive-site.xml to C:\apache-hive-2.1.0-bin\conf
 
 ## Apache Derby
