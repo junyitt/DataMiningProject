@@ -34,24 +34,24 @@ C:\Java\jdk\bin
 ```
 
 Hadoop Configurations
-1. Edit the file core-site.xml in the hadoop directory. Copy this xml property in the configuration in the file.
+1. Edit the file core-site.xml in the hadoop/etc/hadoop directory. Copy this xml property in the configuration in the file.
 ```	
-/span>configuration>
-   /span>property>
-       /span>name>fs.defaultFS/span>/name>
-       /span>value>hdfs://localhost:9000</value>
-   /span>/property>
-/span>/configuration>
+<configuration>
+   <property>
+       <name>fs.defaultFS</name>
+       <value>hdfs://localhost:9000</value>
+   </property>
+</configuration>
 ```
 
 2. Edit mapred-site.xml and copy this property in the cofiguration
 ```
-/span>configuration>
-   /span>property>
-       /span>name>mapreduce.framework.name/span>/name>
-       /span>value>yarn/span>/value>
-   /span>/property>
-/span>/configuration>
+<configuration>
+   <property>
+       <name>mapreduce.framework.name</name>
+       <value>yarn</value>
+   </property>
+</configuration>
 ```
    
 3. Create a folder 'data' in the hadoop directory
@@ -63,34 +63,34 @@ Hadoop Configurations
 Note: The path of namenode and datanode across value would be the path of the datanode and namenode folders you just created.
  
 ```
-/span>configuration>
-   /span>property>
-       /span>name>dfs.replication/span>/name>
-       /span>value>1/span>/value>
-   /span>/property>
-   /span>property>
-       /span>name>dfs.namenode.name.dir/span>/name>
-       /span>value>C:\hadoop-3.1.0\hadoop-3.1.0\data\namenode/span>/value>
-   /span>/property>
-   /span>property>
-       /span>name>dfs.datanode.data.dir/span>/name>
-       /span>value> C:\hadoop-3.1.0\hadoop-3.1.0\data\datanode/span>/value>
-   /span>/property>
-/span>/configuration>
+<configuration>
+   <property>
+       <name>dfs.replication</name>
+       <value>1</value>
+   </property>
+   <property>
+       <name>dfs.namenode.name.dir</name>
+       <value>/hadoop-2.8.0/data/namenode</value>
+   </property>
+   <property>
+       <name>dfs.datanode.data.dir</name>
+       <value>/hadoop-2.8.0/data/datanode</value>
+   </property>
+</configuration>
 ```
 
 5. Edit the file yarn-site.xml and add below property in the configuration
 ```
-/span>configuration>
-   /span>property>
-     /span>name>yarn.nodemanager.aux-services/span>/name>
-     /span>value>mapreduce_shuffle/span>/value>
-   /span>/property>
-   /span>property>
-       /span>name>yarn.nodemanager.auxservices.mapreduce.shuffle.class/span>/name>  
-/span>value>org.apache.hadoop.mapred.ShuffleHandler/span>/value>
-   /span>/property>
-/span>/configuration>
+<configuration>
+   <property>
+    	<name>yarn.nodemanager.aux-services</name>
+    	<value>mapreduce_shuffle</value>
+   </property>
+   <property>
+      	<name>yarn.nodemanager.auxservices.mapreduce.shuffle.class</name>  
+	<value>org.apache.hadoop.mapred.ShuffleHandler</value>
+   </property>
+</configuration>
 ```
   
 6. Edit hadoop-env.cmd and replace %JAVA_HOME% with the path of the java folder where your jdk 1.8 is installed
