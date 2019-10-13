@@ -198,6 +198,7 @@ hive > INSERT INTO TABLE students VALUES ('fred flintstone', 35, 1.28), ('barney
 
 ## References:
 1. Java & Hadoop installations
+- <https://github.com/MuhammadBilalYar/Hadoop-On-Window/wiki/Step-by-step-Hadoop-2.8.0-installation-on-Window-10>
 - <https://www.datasciencecentral.com/profiles/blogs/how-to-install-and-run-hadoop-on-windows-for-beginners>
 
 2. Hive installation
