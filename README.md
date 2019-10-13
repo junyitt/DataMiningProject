@@ -1,5 +1,9 @@
 # Data Mining Project
 
+## Team Members:
+1. Cheah Jun Yitt (WQD180107)
+2. Tan Yin Yen (WQD180108)
+
 #### The project follows the following pipeline:  
 - Objective & Acquisition of Data > Management of Data > Processing of Data > Interpretation of Data > Communication of Insights > Recommendations
 
