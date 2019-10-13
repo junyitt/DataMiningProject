@@ -23,11 +23,14 @@
 1. Java 
 2. Hadoop 
 3. Apache derby
-4. Hive 
+4. Hive   
+Refer to: <https://github.com/junyitt/DataMiningProject/blob/master/DataManagement/PreMilestone2.md>
+
 
 ### Clean Data and Store the Data in Hive Data Warehouse
 1. Movie information (rottentomatoes.com) - hive_movie_info_semisep.csv
 2. Movie Reviews (rottentomatoes.com) - hive_movie_reviews_semisep.csv
 3. Movie Box Office Data (boxofficemojo.com) - hive_movie_box_office_semisep.csv
+4. Store the 3 CSV to Hive  - Refer to: <https://github.com/junyitt/DataMiningProject/blob/master/DataManagement/CreateHiveTables.md>
 
 
