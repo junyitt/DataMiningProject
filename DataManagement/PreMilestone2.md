@@ -10,8 +10,8 @@ Operating System: Windows 10 64-bit
 
 
 ## Hadoop
-1. Download Hadoop version 3.1
-  - <https://archive.apache.org/dist/hadoop/common/hadoop-3.1.0/hadoop-3.1.0.tar.gz>
+1. Download Hadoop version 2.8.0
+  - <http://archive.apache.org/dist/hadoop/core//hadoop-2.8.0/hadoop-2.8.0.tar.gz>
 
 2. Extract the .tar.gz file twice using 7z
 
@@ -22,15 +22,15 @@ C:\hadoop
 
 4. Go to environment variable in system properties
 ```
-create a new user variable. HADOOP_HOME : C:\hadoop-3.1.0\hadoop-3.1.0\bin
-create a new user variable. JAVA_HOME : C:\Java\jdk\bin
+create a new user variable. HADOOP_HOME : C:\hadoop\bin
+create a new user variable. JAVA_HOME : C:\Java\jdk1.8.0_212\bin
 ```
 
 5. Set both paths to system variable path:
 ```
-C:\hadoop-3.1.0\hadoop-3.1.0\bin
-C:\hadoop-3.1.0\hadoop-3.1.0\sbin
-C:\Java\jdk\bin
+C:\hadoop\bin
+C:\hadoop\sbin
+C:\Java\jdk1.8.0_212\bin
 ```
 
 Hadoop Configurations
@@ -70,11 +70,11 @@ Note: The path of namenode and datanode across value would be the path of the da
    </property>
    <property>
        <name>dfs.namenode.name.dir</name>
-       <value>/hadoop-2.8.0/data/namenode</value>
+       <value>/hadoop/data/namenode</value>
    </property>
    <property>
        <name>dfs.datanode.data.dir</name>
-       <value>/hadoop-2.8.0/data/datanode</value>
+       <value>/hadoop/data/datanode</value>
    </property>
 </configuration>
 ```
@@ -95,11 +95,11 @@ Note: The path of namenode and datanode across value would be the path of the da
   
 6. Edit hadoop-env.cmd and replace %JAVA_HOME% with the path of the java folder where your jdk 1.8 is installed
 ```
-set JAVA_HOME=C:\Java\jdk1.8.0_
+set JAVA_HOME=C:\Java\jdk1.8.0_212\bin
 ```
   
 7. Download and extract the bin folder. Replace the hadoop bin folder.
-  - <https://github.com/s911415/apache-hadoop-3.1.0-winutils>
+  - <https://github.com/MuhammadBilalYar/HADOOP-INSTALLATION-ON-WINDOW-10/blob/master/Hadoop%20Configuration.zip>
   
 8. Check whether hadoop is successfully installed:
 ```
@@ -116,7 +116,8 @@ start-yarn.cmd
   - <http://localhost:8088/cluster>
 
 11. Check details about hdfs (namenode and datanode)
-  - <http://localhost:9870/>
+  - <http://localhost:50070>
+  - OR (later hadoop version) <http://localhost:9870/> 
 
 
 
