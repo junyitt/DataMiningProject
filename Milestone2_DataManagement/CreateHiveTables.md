@@ -1,5 +1,7 @@
 ### Hive code to create table and insert movie data from rottentomatoes.com via csv
 ```
+use mydb;
+
 create table if not exists rtmovies(box_office int, director string, genre string, theater_date date, streaming_date date, rating string, runtime int, studio string, written_by string, audience_rating int, 
 critics_consensus string, title string, tomatometer int, tomatometer_count int, url string, user_rating_count int)
 row format delimited
@@ -7,7 +9,7 @@ fields terminated by '\;'
 location '/user/hadoop/data_mining'
 tblproperties("skip.header.line.count"="1");
 
-load data local inpath 'C:\Users\jy\Desktop\DataMiningProject\DataManagement\hive_movie_info_semisep.csv' overwrite into table rtmovies;
+load data local inpath 'C:\Users\jy\Desktop\DataMiningProject\Milestone2_DataManagement\hive_movie_info_semisep.csv' overwrite into table mydb.rtmovies;
 ```
 
 ### Hive code to create table and insert movie reviews data from rottentomatoes.com via csv
@@ -18,7 +20,7 @@ fields terminated by '\;'
 location '/user/hadoop/data_mining'
 tblproperties("skip.header.line.count"="1");
 
-load data local inpath 'C:\Users\jy\Desktop\DataMiningProject\DataManagement\hive_movie_reviews_semisep.csv' overwrite into table rtreviews;
+load data local inpath 'C:\Users\jy\Desktop\DataMiningProject\Milestone2_DataManagement\hive_movie_reviews_semisep.csv' overwrite into table mydb.rtmovies;
 ```
 
 ### Hive code to create table and insert movie box office data from boxofficemojo.com via csv
@@ -29,6 +31,6 @@ fields terminated by '\;'
 location '/user/hadoop/data_mining'
 tblproperties("skip.header.line.count"="1");
 
-load data local inpath 'C:\Users\jy\Desktop\DataMiningProject\DataManagement\hive_movie_box_office_semisep.csv' overwrite into table mojomovies;
+load data local inpath 'C:\Users\jy\Desktop\DataMiningProject\Milestone2_DataManagement\hive_movie_box_office_semisep.csv' overwrite into table mydb.rtmovies;
 ```
 
