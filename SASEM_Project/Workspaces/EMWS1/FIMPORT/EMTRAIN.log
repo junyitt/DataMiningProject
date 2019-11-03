@@ -1,0 +1,1515 @@
+*------------------------------------------------------------*
+* Training Log
+Date:                November 03, 2019
+Time:                21:46:21
+*------------------------------------------------------------*
+14715  proc freq data=EMWS1.FIMPORT_VariableSet noprint;
+14716  table ROLE*LEVEL/out=WORK.FIMPORTMETA;
+14717  run;
+
+NOTE: There were 44 observations read from the data set EMWS1.FIMPORT_VARIABLESET.
+NOTE: The data set WORK.FIMPORTMETA has 6 observations and 4 variables.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.00 seconds
+      
+
+14718  proc print data=WORK.FIMPORTMETA label noobs;
+14719  var ROLE LEVEL COUNT;
+14720  label ROLE = "%sysfunc(sasmsg(sashelp.dmine, meta_role_vlabel, NOQUOTE))" LEVEL = "%sysfunc(sasmsg(sashelp.dmine, meta_level_vlabel, NOQUOTE))" COUNT = "%sysfunc(sasmsg(sashelp.dmine, rpt_count_vlabel, NOQUOTE))";
+14721  title9 ' ';
+14722  title10 "%sysfunc(sasmsg(sashelp.dmine, rpt_varSummary_title  , NOQUOTE))";
+14723  run;
+
+NOTE: There were 6 observations read from the data set WORK.FIMPORTMETA.
+NOTE: The PROCEDURE PRINT printed page 1.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+14724  title10;
+
+14725  %let EMEXCEPTIONSTRING=;
+15089  *------------------------------------------------------------*;
+15090  * FIMPORT: Generation of macros and macro variables;
+15091  * To see the code generated, set the EM_DEBUG macro variable to SOURCE or _ALL_;
+15092  *------------------------------------------------------------*;
+
+15093  %let EMEXCEPTIONSTRING=;
+15094  *------------------------------------------------------------*;
+15095  * TRAIN: FIMPORT;
+15096  *------------------------------------------------------------*;
+15097  %let EM_ACTION = TRAIN;
+15098  %let syscc = 0;
+15099  /* Fimport.source */
+15100  %macro main;
+15101        %if %upcase(&EM_ACTION) = CREATE %then %do;
+15102           filename temp catalog 'sashelp.emsamp.Fimport_create.source';
+15103           %include temp;
+15104           filename temp;
+15105           %create;
+15106        %end;
+15107        %else
+15108        %if %upcase(&EM_ACTION) = TRAIN %then %do;
+15109           filename temp catalog 'sashelp.emsamp.Fimport_train.source';
+15110           %include temp;
+15111           filename temp;
+15112           %train;
+15113        %end;
+15114        %else
+15115        %if %upcase(&EM_ACTION) = UPDATE %then %do;
+15116           filename temp catalog 'sashelp.emsamp.Fimport_update.source';
+15117           %include temp;
+15118           filename temp;
+15119           %update;
+15120        %end;
+15121        %else
+15122        %if %upcase(&EM_ACTION) = PROPERTY %then %do;
+15123           filename temp catalog 'sashelp.emsamp.Fimport_actions.source';
+15124           %include temp;
+15125           filename temp;
+15126           %property;
+15127        %end;
+15128         %else
+15129        %if %upcase(&EM_ACTION) = SCORE %then %do;
+15130           filename temp catalog 'sashelp.emsamp.Fimport_score.source';
+15131           %include temp;
+15132           filename temp;
+15133           %score;
+15134        %end;
+15135        %else
+15136        %if %upcase(&EM_ACTION) = REPORT %then %do;
+15137           filename temp catalog 'sashelp.emsamp.Fimport_report.source';
+15138           %include temp;
+15139           filename temp;
+15140           %report;
+15141        %end;
+15142        %else
+15143        %if %upcase(&EM_ACTION) = OPENVARIABLESET %then %do;
+15144           filename temp catalog 'sashelp.emsamp.Fimport_actions.source';
+15145           %include temp;
+15146           filename temp;
+15147           %openvariableset;
+15148        %end;
+15149        %else
+15150        %if %upcase(&EM_ACTION) = CLOSEVARIABLESET %then %do;
+15151           filename temp catalog 'sashelp.emsamp.Fimport_actions.source';
+15152           %include temp;
+15153           filename temp;
+15154           %closevariableset;
+15155        %end;
+15156  %mend main;
+15157  %main;
+NOTE: %INCLUDE (level 1) file TEMP is file SASHELP.EMSAMP.FIMPORT_TRAIN.SOURCE.
+15158 +%EM_GETNAME(key=USERIMPORTFILE, type=FILE, extension=txt);
+15159 +%macro appendExt;
+15160 +   data _null_;
+15161 +      tempuif =  trim("&EM_USER_USERIMPORTFILE");
+15162 +      rfile = reverse(tempuif);
+15163 +      period = indexc(rfile,".");
+15164 +      uif = substr(tempuif, 1, length(tempuif)- period+1);
+15165 +      newuif = trim(uif)||trim("&EM_PROPERTY_FILETYPE");
+15166 +      call symput("EM_USER_USERIMPORTFILE",%bquote(newuif));
+15167 +   run;
+15168 +%mend appendExt;
+15170 +%macro getNobs(ds);
+15171 + %global dset nobs;
+15172 + %let dset=&ds;
+15173 + %let dsid = %sysfunc(open(&dset));
+15174 + %if &dsid %then %do;
+15175 +      %let nobs =%sysfunc(attrn(&dsid,nobs));
+15176 +      %let rc = %sysfunc(close(&dsid));
+15177 +   %end;
+15178 + %else %put open for data set &dset failed - %sysfunc(sysmsg());
+15179 +%mend getNobs;
+15180 +%macro keepordrop;
+15181 +  proc contents data=work.importfile noprint
+15182 +  out=work.importattrs;
+15183 +  run;
+15184 +  %getNobs(work.importattrs);
+15185 +  data _null_;
+15186 +    set  work.importattrs;
+15187 +    call symput("varname"||left(_n_),name);
+15188 +  run;
+15190 +  %put nobs=&nobs  maxcols=&EM_PROPERTY_MAXCOLS;
+15191 +  /* importattrs contains 1 observation for each VARIABLE in the data set. */
+15192 +  %if &nobs > &EM_PROPERTY_MAXCOLS %then %do;
+15193 +     %let diff = %eval(&nobs - &EM_PROPERTY_MAXCOLS);
+15194 +     %put diff=&diff;
+15195 +     %if %eval(&diff ge &EM_PROPERTY_MAXCOLS) %then %do;
+15196 +         %let kORd = keep;
+15197 +             %let start=1;
+15198 +             %let end = &EM_PROPERTY_MAXCOLS;
+15199 +       %end;
+15200 +     %else %do;
+15201 +         %let kORd = drop;
+15202 +             %let start = &EM_PROPERTY_MAXCOLS + 1;
+15203 +             %let end = &nobs;
+15204 +       %end;
+15205 +     data &em_user_data;
+15206 +        set &em_user_data;
+15207 +        &kORd
+15208 +        %do i = &start %to &end;
+15209 +            &&varname&i
+15210 +         %end;
+15211 +        ;
+15212 +     run;
+15213 +%end;
+15214 +%mend keepordrop;
+15215 +%macro dropformatvars;
+15216 +   %put fmtcnt=&fmtcnt;
+15217 +   data new;
+15218 +     set work.importfile;
+15219 +     %do i = 1 %to &fmtcnt;
+15220 +       x1zy&i =put(&&varname&i,&&fmt&i);
+15221 +     %end;
+15222 +   run;
+15223 +   data new;
+15224 +     set new;
+15225 +     drop
+15226 +     %do i = 1 %to &fmtcnt;
+15227 +     &&varname&i
+15228 +     %end;
+15229 +     ;
+15230 +   run;
+15231 +   proc datasets library=work nolist;
+15232 +     modify new;
+15233 +     %do i = 1 %to &fmtcnt;
+15234 +     rename x1zy&i=&&varname&i;
+15235 +     %end;
+15236 +   run; quit;
+15237 +   data work.importfile;
+15238 +     set new;
+15239 +   run;
+15240 +%mend;
+15242 +%macro procimport(out=);
+15243 +   %if %upcase(&EM_PROPERTY_FILETYPE)=MDB %then %do;
+15244 +      proc import table=%sysfunc(trim(&EM_PROPERTY_ACCESSTABLE))
+15245 +         out=&out
+15246 +         dbms = ACCESS
+15247 +         replace;
+15248 +         database="%trim(&_IFILENAME)"
+15249 +   %end;
+15250 +   %else %do;
+15251 +       proc import datafile="%trim(&_IFILENAME)"
+15252 +          out=&out
+15254 +      %put filetype=*&EM_PROPERTY_FILETYPE.*;
+15255 +      %put delimiter=*&EM_PROPERTY_DELIMITER.*;
+15256 +      %if %upcase(&EM_PROPERTY_FILETYPE) ^= TXT %then %do;
+15257 +         dbms=&EM_PROPERTY_FILETYPE
+15258 +      %end;
+15259 +      %else %do;
+15260 +         dbms=TAB
+15261 +      %end;
+15262 +      /* Work around for the following defects:S0560899 and S0560009.   */
+15263 +      %let sasEnv=%sysfunc(getlocenv());
+15264 +      %if %upcase(&EM_PROPERTY_FILETYPE) = XLS and %upcase(&sasEnv) ^= SBCS %then %do;
+15265 +         dbms=EXCEL
+15266 +      %end;
+15268 +      replace;
+15269 +      %if %substr(%upcase(&EM_PROPERTY_FILETYPE),1,2)=WK | %upcase(&EM_PROPERTY_FILETYPE)=XLS
+15270 +       | %upcase(&EM_PROPERTY_FILETYPE)=DLM | %upcase(&EM_PROPERTY_FILETYPE)=CSV
+15271 +       | %upcase(&EM_PROPERTY_FILETYPE)=TAB | %upcase(&EM_PROPERTY_FILETYPE)=TXT %then %do;
+15272 +        %if %length(&EM_PROPERTY_NAMEROW) > 0 %then %do;
+15273 +            getnames=&EM_PROPERTY_NAMEROW;
+15274 +        %end;
+15275 +      %end;
+15276 +      %if %upcase(&EM_PROPERTY_FILETYPE)=CSV | %upcase(&EM_PROPERTY_FILETYPE)=DLM |
+15277 +          %upcase(&EM_PROPERTY_FILETYPE=TXT)  %then %do;
+15278 +         %if (%length(%trim(%bquote(&EM_PROPERTY_DELIMITER))) > 0) %then %do;
+15279 +            %if "%upcase(&EM_PROPERTY_DELIMITER)"="SP" %then %do;
+15280 +               delimiter=" ";
+15281 +            %end;
+15282 +            %else %if "%upcase(&EM_PROPERTY_DELIMITER)"="TAB" %then %do;
+15283 +               /* Do not specifiy a delimiter */
+15284 +            %end;
+15285 +            %else %do;
+15286 +               delimiter="&EM_PROPERTY_DELIMITER";
+15287 +            %end;
+15288 +         %end;
+15289 +         %if %eval(&EM_PROPERTY_SKIPROWS > 0) %then %do;
+15290 +            datarow=&EM_PROPERTY_SKIPROWS;
+15291 +            /* Guessingrows must be >= skiprows */
+15292 +            %if %eval(&EM_PROPERTY_GUESSROWS < &EM_PROPERTY_SKIPROWS ) %then %do;
+15293 +              %let EM_PROPERTY_GUESSROWS = &EM_PROPERTY_SKIPROWS;
+15294 +            %end;
+15295 +         %end;
+15296 +         %if %eval(&EM_PROPERTY_GUESSROWS > 0) %then %do;
+15297 +            guessingrows=&EM_PROPERTY_GUESSROWS;
+15298 +         %end;
+15299 +       %end;
+15300 +      %if %upcase(&EM_PROPERTY_FILETYPE)=DTA | %upcase(&EM_PROPERTY_FILETYPE)=JMP
+15301 +                 | %upcase(&EM_PROPERTY_FILETYPE)=SAV %then %do;
+15302 +            FMTLIB = work.formats;
+15303 +      %end;
+15304 +   %end;
+15305 +   run;
+15306 +%mend procimport;
+15308 +%macro train;
+15310 +   %let vvnString = %sysfunc(getoption(validvarname));
+15312 +   %em_getname(key=DATA,           type=DATA);
+15313 +   %em_getname(key=EMCMETADEFAULT, type=DATA);
+15314 +   %em_getname(key=EMTMETADEFAULT, type=DATA);
+15315 +   %em_getname(key=EMSTATDEFAULT, type=DATA);
+15317 +   %appendExt;
+15319 +   %let _IFILENAME = %nrbquote(%trim(&EM_PROPERTY_IFILENAME));
+15320 +   %if %upcase(&EM_PROPERTY_IMPORTTYPE) = LOCAL %then %do;
+15321 +       %if %nrbquote(%sysfunc(fileexist(&EM_USER_USERIMPORTFILE))) %then
+15322 +           %let _IFILENAME = %nrbquote(&EM_USER_USERIMPORTFILE);
+15323 +   %end;
+15325 +   %if ^%sysfunc(fileexist(%nrbquote(&_IFILENAME))) %then %do;
+15326 +       %let EMEXCEPTIONSTRING = exception.server.EMTOOL.NOTRAININGCODEFILE,%nrbquote(&_IFILENAME);
+15327 +       %goto endtrain;
+15328 +   %end;
+15330 +   options validvarname=ANY;
+15331 +   %procimport(out=work.importfile);
+15333 +   %if %upcase(&EM_PROPERTY_FILETYPE) = DTA | %upcase(&EM_PROPERTY_FILETYPE) = JMP
+15334 +              | %upcase(&EM_PROPERTY_FILETYPE)=SAV %then %do;
+15335 +      %global fmtcnt;
+15336 +      %let fmtcnt=0;
+15337 +      proc contents data=work.importfile out=work.impattrs noprint;
+15338 +      run;
+15339 +      data _null_;
+15340 +        set work.impattrs;
+15341 +        if _n_=1 then i=0;
+15342 +        if substr(format,1,1) ^= "$" and length(trim(format)) > 1 then do;
+15343 +           i = i+1;
+15344 +           varname = substr(name, 1, length(name));
+15345 +           call symput("fmt"||left(i), trim(format)||".");
+15346 +           call symput("varname"||left(i), varname);
+15347 +           call symput("fmtcnt",left(i));
+15348 +      end;
+15349 +      retain i;
+15350 +     run;
+15351 +    %if &fmtcnt > 0 %then %do;
+15352 +       %dropformatvars;
+15353 +    %end;
+15354 +    proc datasets lib=work memtype=data nolist;
+15355 +        modify importfile;
+15356 +        attrib _all_ format=;
+15357 +    run;
+15358 +    quit;
+15359 +   %end;
+15361 +   %let _fimportObs  = 0;
+15362 +   %let _fimportVars = 0;
+15363 +   %if %sysfunc(exist(work.importFile)) %then %do;
+15364 +       %let dsid = %sysfunc(open(work.importFile));
+15365 +       %if &dsid %then %do;
+15366 +           %let _fimportObs  = %sysfunc(attrn(&dsid, NOBS));
+15367 +           %let _fimportVars = %sysfunc(attrn(&dsid, NVARS));
+15368 +       %let dsid = %sysfunc(close(&dsid));
+15369 +       %end;
+15370 +   %end;
+15372 +   %if ^&_fimportObs %then %do;
+15373 +       %let EMEXCEPTIONSTRING = exception.server.EMTOOL.FILE_NO_OBS;
+15374 +       %goto endtrain;
+15375 +   %end;
+15376 +   %if ^&_fimportVars %then %do;
+15377 +       %let EMEXCEPTIONSTRING = exception.server.EMTOOL.FILE_NO_VARS;
+15378 +       %goto endtrain;
+15379 +   %end;
+15381 +   data &em_user_data;
+15382 +      set work.importfile(obs=&EM_PROPERTY_MAXROWS);
+15383 +   run;
+15384 +   %keepordrop;
+15386 +   %em_getname(key=EMSTAT,     type=DATA);
+15388 +   proc datasets lib=&em_lib nolist;
+15389 +      delete &em_nodeid._EMSTATDEFAULT &em_nodeid._EMINFO;
+15390 +   run;
+15392 +   %if "&em_property_advancedadvisor" eq "Y" %then %do;
+15393 +        %EmAdviseColumns(&em_user_data, applyIntervalLevelLowerLimit=Y,
+15394 +            intervalLevelLowerLimit=20, applyMaxPercentMissing=Y,
+15395 +            maxPercentMissing=50, applyMaxClassLevels=Y,
+15396 +            maxClassLevels=20, identifyEmptyColumns=Y,
+15397 +            outdata=&em_user_EMCMETADEFAULT,
+15398 +            computeStat=Y, statisticData=&em_user_EMSTATDEFAULT);
+15400 +        data &em_user_emcmetadefault;
+15401 +           set &em_user_emcmetadefault;
+15402 +           drop nlevel pctmiss min max mean std skewness kurtosis;
+15403 +        run;
+15405 +        data &em_data_eminfo;
+15406 +           length TARGET KEY $32  DATA $43;
+15407 +           TARGET=""; KEY="STATS"; DATA="&em_user_emstatdefault"; output;
+15408 +        run;
+15410 +        %let EM_META_ADVISOR=ADVANCED;
+15412 +   %end;
+15413 +   %else %do;
+15414 +       %EmAdviseColumns(&em_user_data, applyIntervalLevelLowerLimit=N,
+15415 +            applyMaxPercentMissing=N, applyMaxClassLevels=N,
+15416 +            identifyEmptyColumns=N,   maxLevelDetection=0,
+15417 +            outdata=&em_user_EMCMETADEFAULT, computeStat=N, statisticData=WORK.STATISTIC);
+15419 +            %if "&em_property_summarize" eq "Y" %then %do;
+15420 +                %em_getname(key=EMSTAT,  type=DATA);
+15421 +                data &em_data_eminfo;
+15422 +                   length TARGET KEY $32  DATA $43;
+15423 +                   TARGET=""; KEY="STATS"; DATA="&em_user_emstat"; output;
+15424 +                run;
+15425 +            %end;
+15427 +        %let EM_META_ADVISOR=BASIC;
+15429 +   %end;
+15431 +   %em_getname(key=VVNLABEL, type=FILE, extension=sas);
+15432 +   data _null_;
+15433 +      fname = '_text';
+15434 +      rc=filename(fname, "&em_user_vvnlabel");
+15435 +      if ^rc and fexist(fname) then
+15436 +         rc=fdelete(fname);
+15437 +     rc=filename(fname);
+15438 +   run;
+15441 +   /* Validvarname Case */
+15442 +   %let newNameFlag = 0;
+15443 +   %if %sysfunc(exist(&em_user_EMCMETADEFAULT)) %then %do;
+15444 +       %let dsid = %sysfunc(open(&em_user_EMCMETADEFAULT));
+15445 +        %if &dsid %then %do;
+15446 +            %let newNameFlag = %sysfunc(varnum(&dsid, NEWNAME));
+15447 +            %let dsid = %sysfunc(close(&dsid));
+15448 +       %end;
+15449 +   %end;
+15451 +   %if %sysevalf(&newNameFlag>0) %then %do;
+15452 +       proc contents data=work.importfile noprint out=work._any(keep=VARNUM NAME LABEL);
+15453 +       run;
+15454 +       proc sort data=work._any; by VARNUM; run; quit;
+15456 +       options validvarname=V7;
+15458 +       %procimport(out=work.importfile2);
+15460 +       options validvarname=ANY;
+15462 +       proc contents data=work.importfile2 noprint out=work._v7(rename=(NAME=V7NAME) keep=VARNUM NAME LABEL);
+15463 +       run;
+15464 +       proc sort data=work._v7; by varnum; run; quit;
+15466 +       filename _FI "&em_user_vvnlabel";
+15467 +       data work._names;
+15468 +          length string $200;
+15469 +          merge work._v7 work._any;
+15470 +          by VARNUM;
+15471 +          file _FI;
+15472 +          if V7NAME ne NAME then do;
+15473 +             string = trim(V7NAME)!!'= "'!!tranwrd(trim(NAME), '"', '""')!!'"n;';
+15474 +             put string;
+15475 +             if LABEL eq '' then do;
+15476 +                string = 'Label '!!trim(V7NAME)!!"='"!!tranwrd(trim(NAME), "'", "''")!!"';";
+15477 +                put string;
+15478 +             end;
+15479 +             string='drop "'!!tranwrd(trim(NAME), '"', '""')!!'"n;';
+15480 +             put string;
+15481 +          end;
+15482 +          drop string;
+15483 +       run;
+15484 +       data &em_user_data;
+15485 +          set &em_user_data;
+15486 +          %if %sysfunc(fileexist(%nrbquote(&em_user_vvnlabel))) %then %do;
+15487 +              filename _FI "&em_user_vvnlabel";
+15488 +              %inc _FI;
+15489 +             filename _FI;
+15490 +          %end;
+15491 +       run;
+15493 +       proc sort data=&em_user_EMCMETADEFAULT; by NAME; run;
+15494 +       proc sort data=work._names;             by NAME; run;
+15496 +       data &em_user_EMCMETADEFAULT;
+15497 +         merge  &em_user_EMCMETADEFAULT _names;
+15498 +         by NAME;
+15499 +         length DROP $1;
+15500 +         DROP='N';
+15501 +         if NEWNAME ne NAME then do;
+15502 +            if LABEL eq '' then do;
+15503 +               LABEL = NAME;
+15504 +            end;
+15505 +            NAME=V7NAME;
+15506 +         end;
+15507 +         drop NEWNAME V7NAME VARNUM;
+15508 +       run;
+15510 +       proc datasets lib=work nolist;
+15511 +          delete _any _v7 _names importfile2;
+15512 +       run;
+15513 +       quit;
+15515 +   %end;
+15516 +   %else %do;
+15517 +       data &em_user_EMCMETADEFAULT;
+15518 +          set &em_user_EMCMETADEFAULT;
+15519 +          length DROP $1;
+15520 +          DROP='N';
+15521 +       run;
+15522 +   %end;
+15524 +    %EmAdviseTable(&em_user_data, outdata=&em_user_EMTMETADEFAULT, newdataflag=Y);
+15526 +   data _temp;
+15527 +      set &em_user_emtmetadefault(rename=(ROLE=PORT MEMNAME=DATASET CRDATE=MODTIME));
+15528 +      keep PORT LIBNAME DATASET MODTIME COLUMNMETA COLUMNMETAMODTIME NOBS;
+15529 +      PORT='DATA'; COLUMNMETA="&em_nodeid._EMCMETADEFAULT";
+15530 +      COLUMNMETAMODTIME=MODTIME;
+15531 +   run;
+15532 +   proc sort data=&em_data_importset;
+15533 +      by PORT;
+15534 +   run;
+15535 +   data &em_data_importset;
+15536 +      merge &em_data_importset _temp;
+15537 +      by PORT;
+15538 +      if PORT='DATA' then ROLE="&em_property_role";
+15539 +   run;
+15541 +    %em_getname(key=VARIABLESETDELTA, type=FILE, extension=txt);
+15543 +    %if %sysfunc(exist(&em_user_emcmetadefault)) %then %do;
+15544 +        %if %sysfunc(fileexist(&em_user_variablesetdelta)) %then %do;
+15545 +            filename x "&em_user_variablesetdelta";
+15546 +            data &em_data_variableset;
+15547 +               set &em_user_emcmetadefault;
+15548 +               %inc X;
+15549 +            run;
+15550 +            filename x;
+15551 +        %end;
+15552 +        %else %do;
+15553 +            data &em_data_variableset;
+15554 +               set &em_user_emcmetadefault;
+15555 +            run;
+15556 +        %end;
+15557 +    %end;
+15559 +   %if %sysfunc(exist(&em_data_variableset)) and %sysfunc(exist(&em_user_emcmetadefault)) %then %do;
+15560 +      proc compare compare=&em_data_variableset base=&em_user_emcmetadefault
+15561 +         noprint outnoequal outbase outcomp out=_DiffMeta noprint;
+15562 +         id NAME;
+15563 +      run;
+15565 +         filename x1 "&EM_FILE_CDELTA_TRAIN";
+15566 +         data _null_;
+15567 +            length string $200;
+15568 +            set _DiffMeta end=eof;
+15569 +            where _type_='COMPARE';
+15570 +            file x1;
+15571 +            string = 'if NAME="'!!strip(NAME)!!'" then do;';
+15572 +            put string;
+15573 +            string = '   ROLE="'!!strip(ROLE)!!'";';
+15574 +            put string;
+15575 +            string=  '   LEVEL="'!!strip(LEVEL)!!'";';
+15576 +            put string;
+15577 +            string = '   ORDER="'!!strip(ORDER)!!'";';
+15578 +            put string;
+15579 +            put 'end;';
+15580 +            if drop='Y' then do;
+15581 +               string='if NAME="'!!strip(NAME)!!'" then delete;';
+15582 +               put string;
+15583 +            end;
+15584 +            if eof then
+15585 +               put 'drop DROP;';
+15586 +         run;
+15588 +         %em_getname(key=DELTACODE,      type=FILE, extension=txt);
+15589 +         filename x2 "&em_user_deltacode";
+15590 +         %em_copyfile(infref=x1, outfref=x2);
+15591 +         filename x1;
+15592 +         filename x2;
+15594 +         %em_getname(key=VARIABLESETDELTA, type=FILE, extension=txt);
+15595 +         filename x "&em_user_variablesetdelta";
+15596 +         data _null_;
+15597 +            length string $200;
+15598 +            set _DiffMeta end=eof;
+15599 +            where _type_='COMPARE';
+15600 +            file x;
+15601 +            string = 'if NAME="'!!strip(NAME)!!'" then do;';
+15602 +            put string;
+15603 +            string = '   ROLE="'!!strip(ROLE)!!'";';
+15604 +            put string;
+15605 +            string=  '   LEVEL="'!!strip(LEVEL)!!'";';
+15606 +            put string;
+15607 +            string = '   ORDER="'!!strip(ORDER)!!'";';
+15608 +            put string;
+15609 +            string = '   DROP="'!!strip(DROP)!!'";';
+15610 +            put string;
+15611 +            put 'end;';
+15612 +         run;
+15613 +         filename x;
+15614 +       proc datasets lib=work nolist;
+15615 +          delete _DiffMeta;
+15616 +       run;
+15618 +       data &em_data_exportset;
+15619 +          set &em_data_exportset;
+15620 +          if NODEPORT='TRAIN' then do;
+15621 +             ROLE="&em_property_role";
+15622 +             COLUMNMETAMODTIME=datetime();
+15623 +             MODTIME=datetime();
+15624 +             DATASET="&em_nodeid._train";
+15625 +             COLUMNMETA="&em_nodeid._CMeta_TRAIN";
+15626 +             DELTACODE="CDelta_TRAIN";
+15627 +             APPLYDELTA='Y';
+15628 +             EXPORT='Y';
+15629 +             NEEDUPDATE='Y';
+15631 +            %if "&em_property_advancedadvisor" eq "Y" %then %do;
+15632 +                EMINFO="&em_data_eminfo";
+15633 +                EMINFOMODTIME=datetime();
+15634 +            %end;
+15635 +            %else %do;
+15636 +                EMINFO='';
+15637 +                EMINFOMODTIME=.;
+15638 +            %end;
+15639 +          end;
+15640 +       run;
+15641 +   %end;
+15643 +  proc contents data=&em_user_data;
+15644 +  run;
+15645 +  proc datasets library=work nolist;
+15646 +   delete importfile importattrs new;
+15647 +   quit;
+15648 +  run;
+15650 +  /* Reset VALIDVARNAME to original settings */
+15651 +  options validvarname=&vvnString;
+15653 +  %endtrain:
+15654 +%mend train;
+NOTE: %INCLUDE (level 1) ending.
+NOTE: Fileref TEMP has been deassigned.
+
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+filetype=*csv*
+delimiter=*,*
+
+15655   /**********************************************************************
+15656   *   PRODUCT:   SAS
+15657   *   VERSION:   9.4
+15658   *   CREATOR:   External File Interface
+15659   *   DATE:      03NOV19
+15660   *   DESC:      Generated SAS Datastep Code
+15661   *   TEMPLATE SOURCE:  (None Specified.)
+15662   ***********************************************************************/
+15663      data WORK.IMPORTFILE    ;
+15664      %let _EFIERR_ = 0; /* set the ERROR detection macro variable */
+15665      infile 'C:\Users\jy\Desktop\DataMiningProject\\SASEM_Project\Workspaces\EMWS1\FIMPORT\USERIMPORTFILE.csv' delimiter = ',' MISSOVER DSD lrecl=32767 firstobs=2 ;
+15666         informat title $222. ;
+15667         informat runtime best32. ;
+15668         informat audience_score best32. ;
+15669         informat movie_score best32. ;
+15670         informat tomatometer_count best32. ;
+15671         informat user_rating_count best32. ;
+15672         informat genre_Action best32. ;
+15673         informat genre_Adventure best32. ;
+15674         informat genre_Comedy best32. ;
+15675         informat genre_Fantasy best32. ;
+15676         informat genre_Horror best32. ;
+15677         informat genre_Romance best32. ;
+15678         informat "genre_Sci-fi"N best32. ;
+15679         informat "genre_Special Interest"N best32. ;
+15680         informat genre_Western best32. ;
+15681         informat genre_FamilyKids best32. ;
+15682         informat genre_AnimationManga best32. ;
+15683         informat genre_FitnessSports best32. ;
+15684         informat genre_DramaTele best32. ;
+15685         informat genre_MusicalPerfarts best32. ;
+15686         informat genre_ClassicsCult best32. ;
+15687         informat genre_ArthouseInter best32. ;
+15688         informat genre_ThrillMysSusp best32. ;
+15689         informat genre_HistDocument best32. ;
+15690         informat G best32. ;
+15691         informat NC17 best32. ;
+15692         informat NR best32. ;
+15693         informat PG best32. ;
+15694         informat "PG-13"N best32. ;
+15695         informat R best32. ;
+15696         informat ss_mean best32. ;
+15697         informat ss_median best32. ;
+15698         informat ss_p25 best32. ;
+15699         informat ss_p75 best32. ;
+15700         informat ss_std best32. ;
+15701         informat ss_count best32. ;
+15702         informat domestic_gross best32. ;
+15703         informat domestic_opening best32. ;
+15704         informat foreign_gross best32. ;
+15705         informat markets best32. ;
+15706         informat total_gross best32. ;
+15707         informat markets_missing best32. ;
+15708         informat audience_score_positive $5. ;
+15709         informat movie_score_positive $5. ;
+15710         format title $222. ;
+15711         format runtime best12. ;
+15712         format audience_score best12. ;
+15713         format movie_score best12. ;
+15714         format tomatometer_count best12. ;
+15715         format user_rating_count best12. ;
+15716         format genre_Action best12. ;
+15717         format genre_Adventure best12. ;
+15718         format genre_Comedy best12. ;
+15719         format genre_Fantasy best12. ;
+15720         format genre_Horror best12. ;
+15721         format genre_Romance best12. ;
+15722         format "genre_Sci-fi"N best12. ;
+15723         format "genre_Special Interest"N best12. ;
+15724         format genre_Western best12. ;
+15725         format genre_FamilyKids best12. ;
+15726         format genre_AnimationManga best12. ;
+15727         format genre_FitnessSports best12. ;
+15728         format genre_DramaTele best12. ;
+15729         format genre_MusicalPerfarts best12. ;
+15730         format genre_ClassicsCult best12. ;
+15731         format genre_ArthouseInter best12. ;
+15732         format genre_ThrillMysSusp best12. ;
+15733         format genre_HistDocument best12. ;
+15734         format G best12. ;
+15735         format NC17 best12. ;
+15736         format NR best12. ;
+15737         format PG best12. ;
+15738         format "PG-13"N best12. ;
+15739         format R best12. ;
+15740         format ss_mean best12. ;
+15741         format ss_median best12. ;
+15742         format ss_p25 best12. ;
+15743         format ss_p75 best12. ;
+15744         format ss_std best12. ;
+15745         format ss_count best12. ;
+15746         format domestic_gross best12. ;
+15747         format domestic_opening best12. ;
+15748         format foreign_gross best12. ;
+15749         format markets best12. ;
+15750         format total_gross best12. ;
+15751         format markets_missing best12. ;
+15752         format audience_score_positive $5. ;
+15753         format movie_score_positive $5. ;
+15754      input
+15755                  title $
+15756                  runtime
+15757                  audience_score
+15758                  movie_score
+15759                  tomatometer_count
+15760                  user_rating_count
+15761                  genre_Action
+15762                  genre_Adventure
+15763                  genre_Comedy
+15764                  genre_Fantasy
+15765                  genre_Horror
+15766                  genre_Romance
+15767                  "genre_Sci-fi"N
+15768                  "genre_Special Interest"N
+15769                  genre_Western
+15770                  genre_FamilyKids
+15771                  genre_AnimationManga
+15772                  genre_FitnessSports
+15773                  genre_DramaTele
+15774                  genre_MusicalPerfarts
+15775                  genre_ClassicsCult
+15776                  genre_ArthouseInter
+15777                  genre_ThrillMysSusp
+15778                  genre_HistDocument
+15779                  G
+15780                  NC17
+15781                  NR
+15782                  PG
+15783                  "PG-13"N
+15784                  R
+15785                  ss_mean
+15786                  ss_median
+15787                  ss_p25
+15788                  ss_p75
+15789                  ss_std
+15790                  ss_count
+15791                  domestic_gross
+15792                  domestic_opening
+15793                  foreign_gross
+15794                  markets
+15795                  total_gross
+15796                  markets_missing
+15797                  audience_score_positive $
+15798                  movie_score_positive $
+15799      ;
+15800      if _ERROR_ then call symputx('_EFIERR_',1);  /* set ERROR detection macro variable */
+15801      run;
+
+NOTE: The infile 'C:\Users\jy\Desktop\DataMiningProject\\SASEM_Project\Workspaces\EMWS1\FIMPORT\USERIMPORTFILE.csv' is:
+      Filename=C:\Users\jy\Desktop\DataMiningProject\\SASEM_Project\Workspaces\EMWS1\FIMPORT\USERIMPORTFILE.csv,
+      RECFM=V,LRECL=32767,File Size (bytes)=907258,
+      Last Modified=03Nov2019:21:13:02,
+      Create Time=03Nov2019:21:13:02
+
+NOTE: 4878 records were read from the infile 'C:\Users\jy\Desktop\DataMiningProject\\SASEM_Project\Workspaces\EMWS1\FIMPORT\USERIMPORTFILE.csv'.
+      The minimum record length was 91.
+      The maximum record length was 258.
+NOTE: The data set WORK.IMPORTFILE has 4878 observations and 44 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+4878 rows created in WORK.IMPORTFILE from C:\Users\jy\Desktop\DataMiningProject\\SASEM_Project\Workspaces\EMWS1\FIMPORT\USERIMPORTFILE.csv.
+  
+  
+  
+NOTE: WORK.IMPORTFILE data set was successfully created.
+NOTE: The data set WORK.IMPORTFILE has 4878 observations and 44 variables.
+NOTE: PROCEDURE IMPORT used (Total process time):
+      real time           0.40 seconds
+      cpu time            0.39 seconds
+      
+
+
+NOTE: There were 4878 observations read from the data set WORK.IMPORTFILE.
+NOTE: The data set EMWS1.FIMPORT_DATA has 4878 observations and 44 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.01 seconds
+      
+
+
+NOTE: The data set WORK.IMPORTATTRS has 44 observations and 41 variables.
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+
+NOTE: Numeric values have been converted to character values at the places given by: (Line):(Column).
+      23:137   
+NOTE: There were 44 observations read from the data set WORK.IMPORTATTRS.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+nobs=44  maxcols=10000
+
+NOTE: The file EMWS1.FIMPORT_EMSTATDEFAULT (memtype=DATA) was not found, but appears on a DELETE statement.
+NOTE: The file EMWS1.FIMPORT_EMINFO (memtype=DATA) was not found, but appears on a DELETE statement.
+
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+
+15802  %let SYSCC = 0;
+15803  %let _dsidTable = 0;
+15804  %let _engineTable =;
+15805  data _null_;
+15806  dsid = open('EMWS1.FIMPORT_DATA');
+15807  call symput('_dsidTable', strip(put(dsid, best.)));
+15808  if dsid then do;
+15809  call symput('_engineTable', attrc(dsid, 'ENGINE'));
+15810  dsid = close(dsid);
+15811  end;
+15812  run;
+
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+15813  options fmterr;
+15814  data _metaTestView;
+15815  set EMWS1.FIMPORT_DATA;
+15816  if _N_=1 then do;
+15817  output;
+15818  stop;
+15819  end;
+15820  run;
+
+NOTE: There were 1 observations read from the data set EMWS1.FIMPORT_DATA.
+NOTE: The data set WORK._METATESTVIEW has 1 observations and 44 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+15821  proc contents data=EMWS1.FIMPORT_DATA
+15822  out=WORK.M1QQZD35 noprint;
+15823  run;
+
+NOTE: The data set WORK.M1QQZD35 has 44 observations and 41 variables.
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+15824  data WORK.M1QQZD35;
+15825  length NAME $ 64 TYPE $ 1 LABEL $ 200 FORMAT $ 36 INFORMAT $36 INDEX $ 1 INDEXTYPE $ 9;
+15826  label NAME =;
+15827  set WORK.M1QQZD35(keep=name type length label format formatl formatd informat informl informd idxusage rename=(type=itype));
+15828  if itype = 1 then type = 'N';
+15829  else type = 'C';
+15830  if formatl > 0 then do;
+15831  if format ne '' then do;
+15832  if type='N' then format = strip(format)!!strip(put(formatl, best12.))!!'.'!!strip(put(formatd, best12.));
+15833  else format = strip(format)!!strip(put(formatl, best12.))!!'.';
+15834  end;
+15835  else format = strip(put(formatl, best12.))!!'.'!!strip(put(formatd, best12.));
+15836  end;
+15837  else if format ne '' then format = strip(format)!!'.';
+15838  if informl > 0 then do;
+15839  if informat ne ' ' then do;
+15840  if type='N' then informat = strip(informat)!!strip(put(informl, best12.))!!'.'!!strip(put(informd, best12.));
+15841  else informat = strip(informat)!!strip(put(informl, best12.))!!'.';
+15842  end;
+15843  else informat = strip(put(informl, best12.))!!'.'!!strip(put(informd, best12.));
+15844  end;
+15845  else if informat ne '' then informat = strip(informat)!!'.';
+15846  if idxusage = 'NONE' then index ="N";
+15847  else index = "Y";
+15848  indextype = idxusage;
+15849  drop idxusage itype formatl formatd informl informd;
+15850  run;
+
+NOTE: There were 44 observations read from the data set WORK.M1QQZD35.
+NOTE: The data set WORK.M1QQZD35 has 44 observations and 8 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+15851  data WORK.M1QQZD35;
+15852  length UNAME $64;
+15853  set WORK.M1QQZD35;
+15854  UNAME = upcase(NAME);
+15855  run;
+
+NOTE: There were 44 observations read from the data set WORK.M1QQZD35.
+NOTE: The data set WORK.M1QQZD35 has 44 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+15859  data WORK.M1SIXEDO;
+15860  drop UNAME;
+15861  set WORK.M1SIXEDO;
+15862  run;
+
+NOTE: There were 44 observations read from the data set WORK.M1SIXEDO.
+NOTE: The data set WORK.M1SIXEDO has 44 observations and 8 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+NOTE: PROCEDURE DISPLAY used (Total process time):
+      real time           0.25 seconds
+      cpu time            0.17 seconds
+      
+
+
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+
+NOTE: The data set WORK._ANY has 44 observations and 3 variables.
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+
+NOTE: There were 44 observations read from the data set WORK._ANY.
+NOTE: The data set WORK._ANY has 44 observations and 3 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+filetype=*csv*
+delimiter=*,*
+
+16119   /**********************************************************************
+16120   *   PRODUCT:   SAS
+16121   *   VERSION:   9.4
+16122   *   CREATOR:   External File Interface
+16123   *   DATE:      03NOV19
+16124   *   DESC:      Generated SAS Datastep Code
+16125   *   TEMPLATE SOURCE:  (None Specified.)
+16126   ***********************************************************************/
+16127      data WORK.IMPORTFILE2    ;
+16128      %let _EFIERR_ = 0; /* set the ERROR detection macro variable */
+16129      infile 'C:\Users\jy\Desktop\DataMiningProject\\SASEM_Project\Workspaces\EMWS1\FIMPORT\USERIMPORTFILE.csv' delimiter = ',' MISSOVER DSD lrecl=32767 firstobs=2 ;
+16130         informat title $222. ;
+16131         informat runtime best32. ;
+16132         informat audience_score best32. ;
+16133         informat movie_score best32. ;
+16134         informat tomatometer_count best32. ;
+16135         informat user_rating_count best32. ;
+16136         informat genre_Action best32. ;
+16137         informat genre_Adventure best32. ;
+16138         informat genre_Comedy best32. ;
+16139         informat genre_Fantasy best32. ;
+16140         informat genre_Horror best32. ;
+16141         informat genre_Romance best32. ;
+16142         informat genre_Sci_fi best32. ;
+16143         informat genre_Special_Interest best32. ;
+16144         informat genre_Western best32. ;
+16145         informat genre_FamilyKids best32. ;
+16146         informat genre_AnimationManga best32. ;
+16147         informat genre_FitnessSports best32. ;
+16148         informat genre_DramaTele best32. ;
+16149         informat genre_MusicalPerfarts best32. ;
+16150         informat genre_ClassicsCult best32. ;
+16151         informat genre_ArthouseInter best32. ;
+16152         informat genre_ThrillMysSusp best32. ;
+16153         informat genre_HistDocument best32. ;
+16154         informat G best32. ;
+16155         informat NC17 best32. ;
+16156         informat NR best32. ;
+16157         informat PG best32. ;
+16158         informat PG_13 best32. ;
+16159         informat R best32. ;
+16160         informat ss_mean best32. ;
+16161         informat ss_median best32. ;
+16162         informat ss_p25 best32. ;
+16163         informat ss_p75 best32. ;
+16164         informat ss_std best32. ;
+16165         informat ss_count best32. ;
+16166         informat domestic_gross best32. ;
+16167         informat domestic_opening best32. ;
+16168         informat foreign_gross best32. ;
+16169         informat markets best32. ;
+16170         informat total_gross best32. ;
+16171         informat markets_missing best32. ;
+16172         informat audience_score_positive $5. ;
+16173         informat movie_score_positive $5. ;
+16174         format title $222. ;
+16175         format runtime best12. ;
+16176         format audience_score best12. ;
+16177         format movie_score best12. ;
+16178         format tomatometer_count best12. ;
+16179         format user_rating_count best12. ;
+16180         format genre_Action best12. ;
+16181         format genre_Adventure best12. ;
+16182         format genre_Comedy best12. ;
+16183         format genre_Fantasy best12. ;
+16184         format genre_Horror best12. ;
+16185         format genre_Romance best12. ;
+16186         format genre_Sci_fi best12. ;
+16187         format genre_Special_Interest best12. ;
+16188         format genre_Western best12. ;
+16189         format genre_FamilyKids best12. ;
+16190         format genre_AnimationManga best12. ;
+16191         format genre_FitnessSports best12. ;
+16192         format genre_DramaTele best12. ;
+16193         format genre_MusicalPerfarts best12. ;
+16194         format genre_ClassicsCult best12. ;
+16195         format genre_ArthouseInter best12. ;
+16196         format genre_ThrillMysSusp best12. ;
+16197         format genre_HistDocument best12. ;
+16198         format G best12. ;
+16199         format NC17 best12. ;
+16200         format NR best12. ;
+16201         format PG best12. ;
+16202         format PG_13 best12. ;
+16203         format R best12. ;
+16204         format ss_mean best12. ;
+16205         format ss_median best12. ;
+16206         format ss_p25 best12. ;
+16207         format ss_p75 best12. ;
+16208         format ss_std best12. ;
+16209         format ss_count best12. ;
+16210         format domestic_gross best12. ;
+16211         format domestic_opening best12. ;
+16212         format foreign_gross best12. ;
+16213         format markets best12. ;
+16214         format total_gross best12. ;
+16215         format markets_missing best12. ;
+16216         format audience_score_positive $5. ;
+16217         format movie_score_positive $5. ;
+16218      input
+16219                  title $
+16220                  runtime
+16221                  audience_score
+16222                  movie_score
+16223                  tomatometer_count
+16224                  user_rating_count
+16225                  genre_Action
+16226                  genre_Adventure
+16227                  genre_Comedy
+16228                  genre_Fantasy
+16229                  genre_Horror
+16230                  genre_Romance
+16231                  genre_Sci_fi
+16232                  genre_Special_Interest
+16233                  genre_Western
+16234                  genre_FamilyKids
+16235                  genre_AnimationManga
+16236                  genre_FitnessSports
+16237                  genre_DramaTele
+16238                  genre_MusicalPerfarts
+16239                  genre_ClassicsCult
+16240                  genre_ArthouseInter
+16241                  genre_ThrillMysSusp
+16242                  genre_HistDocument
+16243                  G
+16244                  NC17
+16245                  NR
+16246                  PG
+16247                  PG_13
+16248                  R
+16249                  ss_mean
+16250                  ss_median
+16251                  ss_p25
+16252                  ss_p75
+16253                  ss_std
+16254                  ss_count
+16255                  domestic_gross
+16256                  domestic_opening
+16257                  foreign_gross
+16258                  markets
+16259                  total_gross
+16260                  markets_missing
+16261                  audience_score_positive $
+16262                  movie_score_positive $
+16263      ;
+16264      if _ERROR_ then call symputx('_EFIERR_',1);  /* set ERROR detection macro variable */
+16265      run;
+
+NOTE: The infile 'C:\Users\jy\Desktop\DataMiningProject\\SASEM_Project\Workspaces\EMWS1\FIMPORT\USERIMPORTFILE.csv' is:
+      Filename=C:\Users\jy\Desktop\DataMiningProject\\SASEM_Project\Workspaces\EMWS1\FIMPORT\USERIMPORTFILE.csv,
+      RECFM=V,LRECL=32767,File Size (bytes)=907258,
+      Last Modified=03Nov2019:21:13:02,
+      Create Time=03Nov2019:21:13:02
+
+NOTE: 4878 records were read from the infile 'C:\Users\jy\Desktop\DataMiningProject\\SASEM_Project\Workspaces\EMWS1\FIMPORT\USERIMPORTFILE.csv'.
+      The minimum record length was 91.
+      The maximum record length was 258.
+NOTE: The data set WORK.IMPORTFILE2 has 4878 observations and 44 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.00 seconds
+      
+
+4878 rows created in WORK.IMPORTFILE2 from C:\Users\jy\Desktop\DataMiningProject\\SASEM_Project\Workspaces\EMWS1\FIMPORT\USERIMPORTFILE.csv.
+  
+  
+  
+NOTE: WORK.IMPORTFILE2 data set was successfully created.
+NOTE: The data set WORK.IMPORTFILE2 has 4878 observations and 44 variables.
+NOTE: PROCEDURE IMPORT used (Total process time):
+      real time           0.53 seconds
+      cpu time            0.39 seconds
+      
+
+
+NOTE: The data set WORK._V7 has 44 observations and 3 variables.
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+
+NOTE: There were 44 observations read from the data set WORK._V7.
+NOTE: The data set WORK._V7 has 44 observations and 3 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+
+NOTE: The file _FI is:
+      Filename=C:\Users\jy\Desktop\DataMiningProject\\SASEM_Project\Workspaces\EMWS1\FIMPORT\VVNLABEL.sas,
+      RECFM=V,LRECL=32767,File Size (bytes)=0,
+      Last Modified=03Nov2019:21:46:22,
+      Create Time=03Nov2019:21:13:05
+
+NOTE: 9 records were written to the file _FI.
+      The minimum record length was 14.
+      The maximum record length was 54.
+NOTE: There were 44 observations read from the data set WORK._V7.
+NOTE: There were 44 observations read from the data set WORK._ANY.
+NOTE: The data set WORK._NAMES has 44 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+NOTE: %INCLUDE (level 1) file _FI is file C:\Users\jy\Desktop\DataMiningProject\\SASEM_Project\Workspaces\EMWS1\FIMPORT\VVNLABEL.sas.
+16266 +genre_Sci_fi= "genre_Sci-fi"n;
+16267 +Label genre_Sci_fi='genre_Sci-fi';
+16268 +drop "genre_Sci-fi"n;
+16269 +genre_Special_Interest= "genre_Special Interest"n;
+16270 +Label genre_Special_Interest='genre_Special Interest';
+16271 +drop "genre_Special Interest"n;
+16272 +PG_13= "PG-13"n;
+16273 +Label PG_13='PG-13';
+16274 +drop "PG-13"n;
+NOTE: %INCLUDE (level 1) ending.
+NOTE: Fileref _FI has been deassigned.
+
+NOTE: There were 4878 observations read from the data set EMWS1.FIMPORT_DATA.
+NOTE: The data set EMWS1.FIMPORT_DATA has 4878 observations and 44 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+
+NOTE: There were 44 observations read from the data set EMWS1.FIMPORT_EMCMETADEFAULT.
+NOTE: The data set EMWS1.FIMPORT_EMCMETADEFAULT has 44 observations and 21 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+
+NOTE: There were 44 observations read from the data set WORK._NAMES.
+NOTE: The data set WORK._NAMES has 44 observations and 4 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+
+NOTE: There were 44 observations read from the data set EMWS1.FIMPORT_EMCMETADEFAULT.
+NOTE: There were 44 observations read from the data set WORK._NAMES.
+NOTE: The data set EMWS1.FIMPORT_EMCMETADEFAULT has 44 observations and 21 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+
+NOTE: Deleting WORK._ANY (memtype=DATA).
+NOTE: Deleting WORK._V7 (memtype=DATA).
+NOTE: Deleting WORK._NAMES (memtype=DATA).
+NOTE: Deleting WORK.IMPORTFILE2 (memtype=DATA).
+
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+
+16275  %let SYSCC = 0;
+16276  data EMWS1.FIMPORT_EMTMETADEFAULT;
+16277  length LIBNAME $8;
+16278  LIBNAME = "EMWS1";
+16279  run;
+
+NOTE: The data set EMWS1.FIMPORT_EMTMETADEFAULT has 1 observations and 1 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+NOTE: PROCEDURE DISPLAY used (Total process time):
+      real time           0.13 seconds
+      cpu time            0.07 seconds
+      
+
+
+NOTE: There were 1 observations read from the data set EMWS1.FIMPORT_EMTMETADEFAULT.
+NOTE: The data set WORK._TEMP has 1 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+
+NOTE: There were 15 observations read from the data set EMWS1.FIMPORT_IMPORTSET.
+NOTE: The data set EMWS1.FIMPORT_IMPORTSET has 15 observations and 14 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+
+NOTE: There were 15 observations read from the data set EMWS1.FIMPORT_IMPORTSET.
+NOTE: There were 1 observations read from the data set WORK._TEMP.
+NOTE: The data set EMWS1.FIMPORT_IMPORTSET has 15 observations and 14 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+NOTE: %INCLUDE (level 1) file X is file C:\Users\jy\Desktop\DataMiningProject\\SASEM_Project\Workspaces\EMWS1\FIMPORT\VARIABLESETDELTA.txt.
+16308 +if NAME="G" then do;
+16309 +ROLE="INPUT";
+16310 +LEVEL="BINARY";
+16311 +ORDER="";
+16312 +DROP="N";
+16313 +end;
+16314 +if NAME="NC17" then do;
+16315 +ROLE="INPUT";
+16316 +LEVEL="BINARY";
+16317 +ORDER="";
+16318 +DROP="N";
+16319 +end;
+16320 +if NAME="NR" then do;
+16321 +ROLE="INPUT";
+16322 +LEVEL="BINARY";
+16323 +ORDER="";
+16324 +DROP="N";
+16325 +end;
+16326 +if NAME="PG" then do;
+16327 +ROLE="INPUT";
+16328 +LEVEL="BINARY";
+16329 +ORDER="";
+16330 +DROP="N";
+16331 +end;
+16332 +if NAME="PG_13" then do;
+16333 +ROLE="INPUT";
+16334 +LEVEL="BINARY";
+16335 +ORDER="";
+16336 +DROP="N";
+16337 +end;
+16338 +if NAME="R" then do;
+16339 +ROLE="INPUT";
+16340 +LEVEL="BINARY";
+16341 +ORDER="";
+16342 +DROP="N";
+16343 +end;
+16344 +if NAME="audience_score" then do;
+16345 +ROLE="REJECTED";
+16346 +LEVEL="INTERVAL";
+16347 +ORDER="";
+16348 +DROP="N";
+16349 +end;
+16350 +if NAME="audience_score_positive" then do;
+16351 +ROLE="TARGET";
+16352 +LEVEL="BINARY";
+16353 +ORDER="";
+16354 +DROP="N";
+16355 +end;
+16356 +if NAME="genre_Action" then do;
+16357 +ROLE="INPUT";
+16358 +LEVEL="BINARY";
+16359 +ORDER="";
+16360 +DROP="N";
+16361 +end;
+16362 +if NAME="genre_Adventure" then do;
+16363 +ROLE="INPUT";
+16364 +LEVEL="BINARY";
+16365 +ORDER="";
+16366 +DROP="N";
+16367 +end;
+16368 +if NAME="genre_AnimationManga" then do;
+16369 +ROLE="INPUT";
+16370 +LEVEL="BINARY";
+16371 +ORDER="";
+16372 +DROP="N";
+16373 +end;
+16374 +if NAME="genre_ArthouseInter" then do;
+16375 +ROLE="INPUT";
+16376 +LEVEL="BINARY";
+16377 +ORDER="";
+16378 +DROP="N";
+16379 +end;
+16380 +if NAME="genre_ClassicsCult" then do;
+16381 +ROLE="INPUT";
+16382 +LEVEL="BINARY";
+16383 +ORDER="";
+16384 +DROP="N";
+16385 +end;
+16386 +if NAME="genre_Comedy" then do;
+16387 +ROLE="INPUT";
+16388 +LEVEL="BINARY";
+16389 +ORDER="";
+16390 +DROP="N";
+16391 +end;
+16392 +if NAME="genre_DramaTele" then do;
+16393 +ROLE="INPUT";
+16394 +LEVEL="BINARY";
+16395 +ORDER="";
+16396 +DROP="N";
+16397 +end;
+16398 +if NAME="genre_FamilyKids" then do;
+16399 +ROLE="INPUT";
+16400 +LEVEL="BINARY";
+16401 +ORDER="";
+16402 +DROP="N";
+16403 +end;
+16404 +if NAME="genre_Fantasy" then do;
+16405 +ROLE="INPUT";
+16406 +LEVEL="BINARY";
+16407 +ORDER="";
+16408 +DROP="N";
+16409 +end;
+16410 +if NAME="genre_FitnessSports" then do;
+16411 +ROLE="INPUT";
+16412 +LEVEL="BINARY";
+16413 +ORDER="";
+16414 +DROP="N";
+16415 +end;
+16416 +if NAME="genre_HistDocument" then do;
+16417 +ROLE="INPUT";
+16418 +LEVEL="BINARY";
+16419 +ORDER="";
+16420 +DROP="N";
+16421 +end;
+16422 +if NAME="genre_Horror" then do;
+16423 +ROLE="INPUT";
+16424 +LEVEL="BINARY";
+16425 +ORDER="";
+16426 +DROP="N";
+16427 +end;
+16428 +if NAME="genre_MusicalPerfarts" then do;
+16429 +ROLE="INPUT";
+16430 +LEVEL="BINARY";
+16431 +ORDER="";
+16432 +DROP="N";
+16433 +end;
+16434 +if NAME="genre_Romance" then do;
+16435 +ROLE="INPUT";
+16436 +LEVEL="BINARY";
+16437 +ORDER="";
+16438 +DROP="N";
+16439 +end;
+16440 +if NAME="genre_Sci_fi" then do;
+16441 +ROLE="INPUT";
+16442 +LEVEL="BINARY";
+16443 +ORDER="";
+16444 +DROP="N";
+16445 +end;
+16446 +if NAME="genre_Special_Interest" then do;
+16447 +ROLE="INPUT";
+16448 +LEVEL="BINARY";
+16449 +ORDER="";
+16450 +DROP="N";
+16451 +end;
+16452 +if NAME="genre_ThrillMysSusp" then do;
+16453 +ROLE="INPUT";
+16454 +LEVEL="BINARY";
+16455 +ORDER="";
+16456 +DROP="N";
+16457 +end;
+16458 +if NAME="genre_Western" then do;
+16459 +ROLE="INPUT";
+16460 +LEVEL="BINARY";
+16461 +ORDER="";
+16462 +DROP="N";
+16463 +end;
+16464 +if NAME="markets_missing" then do;
+16465 +ROLE="INPUT";
+16466 +LEVEL="BINARY";
+16467 +ORDER="";
+16468 +DROP="N";
+16469 +end;
+16470 +if NAME="movie_score" then do;
+16471 +ROLE="REJECTED";
+16472 +LEVEL="INTERVAL";
+16473 +ORDER="";
+16474 +DROP="N";
+16475 +end;
+16476 +if NAME="movie_score_positive" then do;
+16477 +ROLE="REJECTED";
+16478 +LEVEL="BINARY";
+16479 +ORDER="";
+16480 +DROP="N";
+16481 +end;
+16482 +if NAME="title" then do;
+16483 +ROLE="ID";
+16484 +LEVEL="NOMINAL";
+16485 +ORDER="";
+16486 +DROP="N";
+16487 +end;
+NOTE: %INCLUDE (level 1) ending.
+
+NOTE: There were 44 observations read from the data set EMWS1.FIMPORT_EMCMETADEFAULT.
+NOTE: The data set EMWS1.FIMPORT_VARIABLESET has 44 observations and 21 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+NOTE: Fileref X has been deassigned.
+
+NOTE: There were 44 observations read from the data set EMWS1.FIMPORT_VARIABLESET.
+NOTE: There were 44 observations read from the data set EMWS1.FIMPORT_EMCMETADEFAULT.
+NOTE: The data set WORK._DIFFMETA has 60 observations and 23 variables.
+NOTE: PROCEDURE COMPARE used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+
+NOTE: The file X1 is:
+      Filename=C:\Users\jy\Desktop\DataMiningProject\\SASEM_Project\Workspaces\EMWS1\FIMPORT\CDELTA_TRAIN.sas,
+      RECFM=V,LRECL=32767,File Size (bytes)=0,
+      Last Modified=03Nov2019:21:46:23,
+      Create Time=03Nov2019:21:12:17
+
+NOTE: 151 records were written to the file X1.
+      The minimum record length was 4.
+      The maximum record length was 42.
+NOTE: There were 30 observations read from the data set WORK._DIFFMETA.
+      WHERE _type_='COMPARE';
+NOTE: DATA statement used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.01 seconds
+      
+
+
+NOTE: The file X2 is:
+      Filename=C:\Users\jy\Desktop\DataMiningProject\\SASEM_Project\Workspaces\EMWS1\FIMPORT\DELTACODE.txt,
+      RECFM=V,LRECL=20000,File Size (bytes)=0,
+      Last Modified=03Nov2019:21:46:23,
+      Create Time=03Nov2019:21:13:05
+
+NOTE: 151 records were written to the file X2.
+      The minimum record length was 4.
+      The maximum record length was 42.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+NOTE: Fileref X1 has been deassigned.
+NOTE: Fileref X2 has been deassigned.
+
+NOTE: The file X is:
+      Filename=C:\Users\jy\Desktop\DataMiningProject\\SASEM_Project\Workspaces\EMWS1\FIMPORT\VARIABLESETDELTA.txt,
+      RECFM=V,LRECL=32767,File Size (bytes)=0,
+      Last Modified=03Nov2019:21:46:23,
+      Create Time=03Nov2019:21:13:05
+
+NOTE: 180 records were written to the file X.
+      The minimum record length was 4.
+      The maximum record length was 42.
+NOTE: There were 30 observations read from the data set WORK._DIFFMETA.
+      WHERE _type_='COMPARE';
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+NOTE: Fileref X has been deassigned.
+
+NOTE: Deleting WORK._DIFFMETA (memtype=DATA).
+
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.01 seconds
+      
+
+
+NOTE: There were 6 observations read from the data set EMWS1.FIMPORT_EXPORTSET.
+NOTE: The data set EMWS1.FIMPORT_EXPORTSET has 6 observations and 18 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+NOTE: The PROCEDURE CONTENTS printed page 2.
+
+
+NOTE: The file WORK.NEW (memtype=DATA) was not found, but appears on a DELETE statement.
+NOTE: Deleting WORK.IMPORTFILE (memtype=DATA).
+NOTE: Deleting WORK.IMPORTATTRS (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+16488  *------------------------------------------------------------*;
+16489  * End TRAIN: FIMPORT;
+16490  *------------------------------------------------------------*;
+
+16491  *------------------------------------------------------------*;
+16492  * Close any missing semi colons;
+16493  *------------------------------------------------------------*;
+16494  ;
+16495  ;
+16496  ;
+16497  ;
+16498  quit;
+16499  *------------------------------------------------------------*;
+16500  * Close any unbalanced quotes;
+16501  *------------------------------------------------------------*;
+16502  /*; *"; *'; */
+16503  ;
+16504  run;
+16505  quit;
+16506  /* Reset EM Options */
+16507  options formchar="|----|+|---+=|-/\<>*";
+16508  options nocenter ls=256 ps=10000;
+16509  goptions reset=all device=GIF NODISPLAY;
+

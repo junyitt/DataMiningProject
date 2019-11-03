@@ -1,0 +1,96 @@
+ 
+                                                                                                                                                                                                                                                                
+ 
+ 
+Variable Summary
+
+            Measurement    Frequency
+Role           Level         Count
+
+ID           NOMINAL            1   
+INPUT        BINARY            25   
+INPUT        INTERVAL          14   
+REJECTED     BINARY             1   
+REJECTED     INTERVAL           2   
+TARGET       BINARY             1   
+ 
+                                                                                                                                                                                                                                                                
+ 
+ 
+
+The CONTENTS Procedure
+
+Data Set Name        EMWS1.FIMPORT_DATA            Observations          4878
+Member Type          DATA                          Variables             44  
+Engine               V9                            Indexes               0   
+Created              11/03/2019 21:46:23           Observation Length    560 
+Last Modified        11/03/2019 21:46:23           Deleted Observations  0   
+Protection                                         Compressed            NO  
+Data Set Type                                      Sorted                NO  
+Label                                                                        
+Data Representation  WINDOWS_64                                              
+Encoding             wlatin1  Western (Windows)                              
+
+
+                                           Engine/Host Dependent Information
+
+Data Set Page Size          65536                                                                                      
+Number of Data Set Pages    43                                                                                         
+First Data Page             1                                                                                          
+Max Obs per Page            116                                                                                        
+Obs in First Data Page      106                                                                                        
+Number of Data Set Repairs  0                                                                                          
+ExtendObsCounter            YES                                                                                        
+Filename                    C:\Users\jy\Desktop\DataMiningProject\\SASEM_Project\Workspaces\EMWS1\fimport_data.sas7bdat
+Release Created             9.0401M3                                                                                   
+Host Created                X64_8PRO                                                                                   
+
+
+                         Alphabetic List of Variables and Attributes
+ 
+ #    Variable                   Type    Len    Format     Informat    Label
+
+23    G                          Num       8    BEST12.    BEST32.                           
+24    NC17                       Num       8    BEST12.    BEST32.                           
+25    NR                         Num       8    BEST12.    BEST32.                           
+26    PG                         Num       8    BEST12.    BEST32.                           
+44    PG_13                      Num       8                           PG-13                 
+27    R                          Num       8    BEST12.    BEST32.                           
+ 3    audience_score             Num       8    BEST12.    BEST32.                           
+40    audience_score_positive    Char      5    $5.        $5.                               
+34    domestic_gross             Num       8    BEST12.    BEST32.                           
+35    domestic_opening           Num       8    BEST12.    BEST32.                           
+36    foreign_gross              Num       8    BEST12.    BEST32.                           
+ 7    genre_Action               Num       8    BEST12.    BEST32.                           
+ 8    genre_Adventure            Num       8    BEST12.    BEST32.                           
+15    genre_AnimationManga       Num       8    BEST12.    BEST32.                           
+20    genre_ArthouseInter        Num       8    BEST12.    BEST32.                           
+19    genre_ClassicsCult         Num       8    BEST12.    BEST32.                           
+ 9    genre_Comedy               Num       8    BEST12.    BEST32.                           
+17    genre_DramaTele            Num       8    BEST12.    BEST32.                           
+14    genre_FamilyKids           Num       8    BEST12.    BEST32.                           
+10    genre_Fantasy              Num       8    BEST12.    BEST32.                           
+16    genre_FitnessSports        Num       8    BEST12.    BEST32.                           
+22    genre_HistDocument         Num       8    BEST12.    BEST32.                           
+11    genre_Horror               Num       8    BEST12.    BEST32.                           
+18    genre_MusicalPerfarts      Num       8    BEST12.    BEST32.                           
+12    genre_Romance              Num       8    BEST12.    BEST32.                           
+42    genre_Sci_fi               Num       8                           genre_Sci-fi          
+43    genre_Special_Interest     Num       8                           genre_Special Interest
+21    genre_ThrillMysSusp        Num       8    BEST12.    BEST32.                           
+13    genre_Western              Num       8    BEST12.    BEST32.                           
+37    markets                    Num       8    BEST12.    BEST32.                           
+39    markets_missing            Num       8    BEST12.    BEST32.                           
+ 4    movie_score                Num       8    BEST12.    BEST32.                           
+41    movie_score_positive       Char      5    $5.        $5.                               
+ 2    runtime                    Num       8    BEST12.    BEST32.                           
+33    ss_count                   Num       8    BEST12.    BEST32.                           
+28    ss_mean                    Num       8    BEST12.    BEST32.                           
+29    ss_median                  Num       8    BEST12.    BEST32.                           
+30    ss_p25                     Num       8    BEST12.    BEST32.                           
+31    ss_p75                     Num       8    BEST12.    BEST32.                           
+32    ss_std                     Num       8    BEST12.    BEST32.                           
+ 1    title                      Char    222    $222.      $222.                             
+ 5    tomatometer_count          Num       8    BEST12.    BEST32.                           
+38    total_gross                Num       8    BEST12.    BEST32.                           
+ 6    user_rating_count          Num       8    BEST12.    BEST32.                           

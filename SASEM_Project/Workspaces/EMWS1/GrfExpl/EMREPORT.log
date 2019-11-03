@@ -1,0 +1,155 @@
+*------------------------------------------------------------*
+* Report Log
+Date:                November 03, 2019
+Time:                21:46:30
+*------------------------------------------------------------*
+16265  %let EMEXCEPTIONSTRING=;
+16266  *------------------------------------------------------------*;
+16267  * REPORT: GrfExpl;
+16268  *------------------------------------------------------------*;
+16269  %let EM_ACTION = REPORT;
+16270  %let syscc = 0;
+16271  %macro main;
+16272     filename temp catalog 'sashelp.emexpl.graphexplore_macros.source';
+16273     %include temp;
+16274     filename temp;
+16275  
+16276     %SetProperties;
+16277  
+16278     %if %upcase(&EM_ACTION) = CREATE %then %do;
+16279  
+16280         filename temp catalog 'sashelp.emexpl.graphexplore_create.source';
+16281         %include temp;
+16282         filename temp;
+16283         %create;
+16284     %end;
+16285     %else
+16286     %if %upcase(&EM_ACTION) = TRAIN %then %do;
+16287  
+16288         filename temp catalog 'sashelp.emexpl.graphexplore_train.source';
+16289         %include temp;
+16290         filename temp;
+16291         %train;
+16292  
+16293     %end;
+16294     %else
+16295     %if %upcase(&EM_ACTION) = REPORT %then %do;
+16296  
+16297         filename temp catalog 'sashelp.emexpl.graphexplore_report.source';
+16298         %include temp;
+16299         filename temp;
+16300  
+16301         %report;
+16302     %end;
+16303  
+16304  %mend main;
+16305  
+16306  %main;
+NOTE: %INCLUDE (level 1) file TEMP is file SASHELP.EMEXPL.GRAPHEXPLORE_MACROS.SOURCE.
+16307 +%macro SetProperties;
+16308 +   %em_checkmacro(name=EM_PROPERTY_INTERVALBYTARGET,      global=Y, value=Y);
+16309 +   %em_checkmacro(name=EM_PROPERTY_CLASSBYTARGET,         global=Y, value=Y);
+16310 +   %em_checkmacro(name=EM_PROPERTY_DATASOURCE,            global=Y, value=SAMPLE);
+16311 +   %em_checkmacro(name=EM_PROPERTY_EMSAMPLEMETHOD,        global=Y, value=FIRSTN);
+16312 +   %em_checkmacro(name=EM_PROPERTY_EMSAMPLESIZE,          global=Y, value=DEFAULT);
+16313 +   %em_checkmacro(name=EM_PROPERTY_EMRANDOMSEED,          global=Y, value=12345);
+16314 +
+16315 +%mend SetProperties;
+NOTE: %INCLUDE (level 1) ending.
+NOTE: Fileref TEMP has been deassigned.
+NOTE: %INCLUDE (level 1) file TEMP is file SASHELP.EMEXPL.GRAPHEXPLORE_REPORT.SOURCE.
+16316 +%macro report;
+16317 +
+16318 +   %let sourceKey = em_import_data;
+16319 +    %if "&sourceKey" eq "" %then
+16320 +        %let sourceKey = em_import_transaction;
+16321 +    %if "&sourceKey" eq "" %then
+16322 +        %let sourceKey = em_import_document;
+16323 +    %if "&sourceKey" eq "" %then
+16324 +        %let sourceKey = em_import_validate;
+16325 +    %if "&sourceKey" eq "" %then
+16326 +        %let sourceKey = em_import_test;
+16327 +    %if "&sourceKey" eq "" %then
+16328 +        %let sourceKey = em_import_score;
+16329 +
+16330 +   %if "&EM_PROPERTY_DATASOURCE" = "SAMPLE" %then
+16331 +      %let sourceKey =SAMPLE_DATA;
+16332 +
+16333 +    %em_report(Key=&sourceKey, viewType=DATA, Block=Data, Description=Sample, Autodisplay=Y, localize=Y );
+16334 +
+16335 +   %if &EM_NUM_TARGET %then %do;
+16336 +       %if &EM_NUM_INTERVAL_TARGET %then %do;
+16337 +           %do i=1 %to &EM_NUM_INTERVAL_TARGET;
+16338 +               %let targetName = %scan(%EM_INTERVAL_TARGET, &i);
+16339 +               %if "&EM_PROPERTY_TARGET" = "Y" %then %do;
+16340 +                   %em_report(Key=&sourceKey, viewType=HISTOGRAM, X=&targetName, freq=%EM_FREQ, block=Target, AutoDisplay=Y, Description=&targetName);
+16341 +               %end;
+16342 +
+16343 +               %if "&EM_PROPERTY_GROUPBYTARGET" = "Y" and &EM_NUM_SEGMENT %then %do;
+16344 +                   %do j=1 %to &EM_NUM_SEGMENT;
+16345 +                       %let groupName = %scan(%em_segment, &j);
+16346 +                       %em_report(Key=&sourceKey, viewType=BASEBOX, Y=&targetName, X=&groupname, freq=%EM_FREQ, Block=GroupPlots, Description=%nrbquote(&targetName x &groupName));
+16347 +                   %end;
+16348 +               %end;
+16349 +           %end;
+16350 +       %end;
+16351 +
+16352 +       %let numClassTarget = %eval(&EM_NUM_BINARY_TARGET + &EM_NUM_NOMINAL_TARGET + &EM_NUM_ORDINAL_TARGET );
+16353 +       %if &numClassTarget %then %do;
+16354 +           %do i=1 %to &numClassTarget;
+16355 +               %let targetName = %scan(%EM_BINARY_TARGET %EM_NOMINAL_TARGET %EM_ORDINAL_TARGET, &i);
+16356 +               %if "&EM_PROPERTY_TARGET" = "Y" %then %do;
+16357 +                   %em_report(Key=&sourceKey, viewType=BAR, X=&targetName, freq=%EM_FREQ, block=Target, AutoDisplay=Y, Description=&targetName);
+16358 +               %end;
+16359 +
+16360 +               %if "&EM_PROPERTY_GROUPBYTARGET" = "Y" and &EM_NUM_SEGMENT %then %do;
+16361 +                   %do j=1 %to &EM_NUM_SEGMENT;
+16362 +                       %let groupName = %scan(%em_segment, &j);
+16363 +                       %em_report(Key=&sourceKey, viewType=BAR, X=&groupName, group=&targetname, freq=%EM_FREQ, Block=GroupPlots, Description=%nrbquote(&targetName x &groupName));
+16364 +                   %end;
+16365 +               %end;
+16366 +
+16367 +           %end;
+16368 +       %end;
+16369 +
+16370 +   %end;
+16371 +
+16372 +%mend report;
+NOTE: %INCLUDE (level 1) ending.
+NOTE: Fileref TEMP has been deassigned.
+
+NOTE: The data set WORK.EM_USER_REPORT has 132 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.01 seconds
+      
+
+
+NOTE: There were 132 observations read from the data set WORK.EM_USER_REPORT.
+NOTE: The data set WORK.EM_USER_REPORT has 264 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.01 seconds
+      
+
+16373  *------------------------------------------------------------*;
+16374  * End REPORT: GrfExpl;
+16375  *------------------------------------------------------------*;
+16376  
+
+16377  /* Reset EM Options */
+16378  options formchar="|----|+|---+=|-/\<>*";
+16379  options nocenter ls=256 ps=10000;
+16380  goptions reset=all device=GIF NODISPLAY;
+
+16381  proc sort data=WORK.EM_USER_REPORT;
+16382  by ID VIEW;
+16383  run;
+
+NOTE: There were 264 observations read from the data set WORK.EM_USER_REPORT.
+NOTE: The data set WORK.EM_USER_REPORT has 264 observations and 4 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
