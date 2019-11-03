@@ -5,3 +5,4 @@ SentimentAnalysis/aclImdb
 /**/dask-worker-space/
 *.csv
 *.pkl
+Milestone1_DataAcquisition/archive/z_Archive_DataExtraction/youtube_credential.json
