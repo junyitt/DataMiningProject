@@ -1,3 +1,7 @@
 .ipynb_checkpoints
-DataAcquisition/geckodriver.log
+/**/geckodriver-v0.25.0-win64
+/**/geckodriver.log
 SentimentAnalysis/aclImdb
+/**/dask-worker-space/
+*.csv
+*.pkl
