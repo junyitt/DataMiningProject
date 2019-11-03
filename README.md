@@ -63,7 +63,7 @@ Implications:
 - The binary target variable (audience score indicator) is balance, i.e. 50% good and 50% bad.
 
 3. Table properties 
-![alt text] (https://raw.githubusercontent.com/junyitt/DataMiningProject/master/Milestone3_DataProcessing/images/table_properties.JPG)
+![alt text](https://raw.githubusercontent.com/junyitt/DataMiningProject/master/Milestone3_DataProcessing/images/table_properties.JPG)
 [File Import, Graph Explore]
 - 4878 rows
 - 44 columns
