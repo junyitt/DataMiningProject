@@ -1,0 +1,24 @@
+ 
+                                                                                                                                                                                                                                                                
+ 
+ 
+Variable Summary
+
+            Measurement    Frequency
+Role           Level         Count
+
+INPUT        BINARY            25   
+INPUT        INTERVAL          14   
+REJECTED     BINARY             1   
+REJECTED     INTERVAL           2   
+TARGET       BINARY             1   
+ 
+                                                                                                                                                                                                                                                                
+ 
+Rejected Variables Summary
+Number Of Observations
+
+Variable             Percent
+  Name      Label    Missing
+
+markets              58.5896

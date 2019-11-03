@@ -1,0 +1,78 @@
+*------------------------------------------------------------*
+User:                jy
+Date:                November 03, 2019
+Time:                22:52:56
+*------------------------------------------------------------*
+* Training Output
+*------------------------------------------------------------*
+ 
+ 
+ 
+ 
+Variable Summary
+ 
+            Measurement    Frequency
+Role           Level         Count
+ 
+INPUT        BINARY            25
+INPUT        INTERVAL          14
+REJECTED     BINARY             1
+REJECTED     INTERVAL           2
+TARGET       BINARY             1
+ 
+ 
+ 
+Rejected Variables Summary
+Number Of Observations
+ 
+Variable             Percent
+  Name      Label    Missing
+ 
+markets              58.5896
+
+
+*------------------------------------------------------------*
+* Score Output
+*------------------------------------------------------------*
+
+
+*------------------------------------------------------------*
+* Report Output
+*------------------------------------------------------------*
+ 
+ 
+ 
+Imputation Summary
+Number Of Observations
+ 
+                                                                                                      Number of
+                      Impute                              Impute             Measurement                Missing
+Variable Name         Method     Imputed Variable          Value    Role        Level       Label     for TRAIN
+ 
+domestic_gross       TREESURR    IMP_domestic_gross          .      INPUT     INTERVAL                      741
+domestic_opening     TREESURR    IMP_domestic_opening        .      INPUT     INTERVAL                      741
+foreign_gross        TREESURR    IMP_foreign_gross           .      INPUT     INTERVAL                      741
+markets_missing      TREESURR    IMP_markets_missing         .      INPUT     BINARY                        741
+runtime              TREESURR    IMP_runtime                 .      INPUT     INTERVAL                      143
+ss_count             TREESURR    IMP_ss_count                .      INPUT     INTERVAL                       31
+ss_mean              TREESURR    IMP_ss_mean                 .      INPUT     INTERVAL                       31
+ss_median            TREESURR    IMP_ss_median               .      INPUT     INTERVAL                       31
+ss_p25               TREESURR    IMP_ss_p25                  .      INPUT     INTERVAL                       31
+ss_p75               TREESURR    IMP_ss_p75                  .      INPUT     INTERVAL                       31
+ss_std               TREESURR    IMP_ss_std                  .      INPUT     INTERVAL                       31
+total_gross          TREESURR    IMP_total_gross             .      INPUT     INTERVAL                      741
+user_rating_count    TREESURR    IMP_user_rating_count       .      INPUT     INTERVAL                      182
+ 
+ 
+ 
+ 
+Variable Distribution Training Data
+ 
+        Number of
+          Missing    Number of    Percent of
+Obs     for TRAIN    Variables     Variables
+ 
+ 1            741        5          38.4615
+ 2            182        1           7.6923
+ 3            143        1           7.6923
+ 4             31        6          46.1538
