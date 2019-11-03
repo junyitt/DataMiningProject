@@ -39,17 +39,19 @@ Refer to: <https://github.com/junyitt/DataMiningProject/blob/master/DataManageme
 
 
 ## Milestone 3 (Processing of Data):
-### Part 1: Data Cleaning and Features Engineering
+### Part 1: Export Data to CSV from Hive
+
+### Part 2: Data Cleaning and Features Engineering
 - Clean and Extract Features from Rotten Tomatoes Movie Info Data (rottentomatoes.com)
 - Clean and Extract Features from Box Office Data (boxofficemojo.com)
 
-### Part 2: Sentiment Analysis
+### Part 3: Sentiment Analysis
 - Sentiment Analysis on Rotten Tomatoes Review Data
 - Assigning a sentiment score, and aggregating the sentiment score for each movie
 
-### Part 3: Merging of Features and Attributes from all 3 sources of data
+### Part 4: Merging of Features and Attributes from all 3 sources of data
 
-### Part 4: SEM in SAS Enterprise Miner (Part 1 of SEMMA Methodology)
+### Part 5: SEM in SAS Enterprise Miner (Part 1 of SEMMA Methodology)
 1. Analysis Goal  
 - A movie streaming company (Netflix) seeks to maximize customer's retention by recommending highly rated movies with DVD or streaming options available to their users. 
 - Use sentiment score of user reviews on a movie, movie information and box office data to predict the user ratings of a movie.
