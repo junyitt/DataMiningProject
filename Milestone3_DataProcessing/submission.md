@@ -6,3 +6,7 @@
 
 #### Report (pdf):   
 <https://github.com/junyitt/DataMiningProject/blob/master/Milestone3_DataProcessing/Report_Milestone3.pdf>  
+
+
+#### SAS Code (Project files)
+https://github.com/junyitt/DataMiningProject/tree/master/SASEM_Project
