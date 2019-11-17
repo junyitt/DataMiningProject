@@ -98,6 +98,20 @@ Implications:
 - Shows approximately 50% True (good movie) and 50% False (bad movie).
 
 
+## Milestone 4(Interpretation of Data):
+### Part 1: Data Partition 
+- Split the data into 50% training set and 50% validation set for modelling
+
+### Part 2: Model (Using decision tree)
+##### Split the nodes based on three factors:
+1. Information gain: Selecting attribute with high information gain is preferred.
+2. Interpretability: Selecting attribute with a slightly lower information gain but can be easily understood and explained is preferred.
+3. Diversity: Using attributes from various sources is preferred (as established in previous milestones), hence it is preferred to split the nodes with consideration of attributes from movie information, movie reviews (sentiment score) and movie box office performance. 
+
+##### Subtree Assessment Plot
+- Determine how many leaves are sufficient to build a decision tree model that have a low misclassification rate, easily interepreted and understood for decision making.
+
+
 
 
 
