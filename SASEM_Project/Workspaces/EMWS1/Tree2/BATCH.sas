@@ -1,5 +1,5 @@
 *------------------------------------------------------------*;
-* Plot: Creating EM5BATCH data sets;
+* Tree2: Creating EM5BATCH data sets;
 *------------------------------------------------------------*;
 %let EM_ACTION = run;
 %let EM_DEBUG =;
@@ -9,7 +9,7 @@
 data workspace;
 length property $64 value $100;
 property= 'PROJECTLOCATION';
-value= "C:\Users\jy\Desktop\DataMiningProject\";
+value= "C:\Users\jy\Desktop\DataMiningProject";
 output;
 property= 'PROJECTNAME';
 value= "SASEM_Project";
@@ -44,7 +44,7 @@ run;
 %if %index(&actionstring, RUN) or %index(&actionstring, REPORT) %then %do;
 data actions;
 length id $12 action $40;
-id="Plot";
+id="Tree2";
 %if %index(&actionstring, RUN) %then %do;
 action='run';
 output;

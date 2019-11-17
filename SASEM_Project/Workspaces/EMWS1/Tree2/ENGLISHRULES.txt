@@ -1,0 +1,96 @@
+*------------------------------------------------------------*
+ Node = 62
+*------------------------------------------------------------*
+if Imputed user_rating_count < 15790 or MISSING
+AND Imputed ss_std < 0.46818
+AND Imputed ss_mean < 0.76992 or MISSING
+then 
+ Tree Node Identifier   = 62
+ Number of Observations = 352
+ Predicted: audience_score_positive=True = 0.36
+ Predicted: audience_score_positive=False = 0.64
+ 
+*------------------------------------------------------------*
+ Node = 63
+*------------------------------------------------------------*
+if Imputed user_rating_count >= 15790
+AND Imputed ss_std < 0.46818
+AND Imputed ss_mean < 0.76992 or MISSING
+then 
+ Tree Node Identifier   = 63
+ Number of Observations = 71
+ Predicted: audience_score_positive=True = 0.83
+ Predicted: audience_score_positive=False = 0.17
+ 
+*------------------------------------------------------------*
+ Node = 64
+*------------------------------------------------------------*
+if genre_HistDocument IS ONE OF: 1
+AND Imputed ss_std >= 0.46818 or MISSING
+AND Imputed ss_mean < 0.76992 or MISSING
+then 
+ Tree Node Identifier   = 64
+ Number of Observations = 78
+ Predicted: audience_score_positive=True = 0.60
+ Predicted: audience_score_positive=False = 0.40
+ 
+*------------------------------------------------------------*
+ Node = 65
+*------------------------------------------------------------*
+if genre_HistDocument IS ONE OF: 0 or MISSING
+AND Imputed ss_std >= 0.46818 or MISSING
+AND Imputed ss_mean < 0.76992 or MISSING
+then 
+ Tree Node Identifier   = 65
+ Number of Observations = 922
+ Predicted: audience_score_positive=True = 0.21
+ Predicted: audience_score_positive=False = 0.79
+ 
+*------------------------------------------------------------*
+ Node = 66
+*------------------------------------------------------------*
+if Imputed user_rating_count < 474.5
+AND Imputed ss_std < 0.40709 or MISSING
+AND Imputed ss_mean >= 0.76992
+then 
+ Tree Node Identifier   = 66
+ Number of Observations = 291
+ Predicted: audience_score_positive=True = 0.61
+ Predicted: audience_score_positive=False = 0.39
+ 
+*------------------------------------------------------------*
+ Node = 67
+*------------------------------------------------------------*
+if Imputed user_rating_count >= 474.5 or MISSING
+AND Imputed ss_std < 0.40709 or MISSING
+AND Imputed ss_mean >= 0.76992
+then 
+ Tree Node Identifier   = 67
+ Number of Observations = 497
+ Predicted: audience_score_positive=True = 0.86
+ Predicted: audience_score_positive=False = 0.14
+ 
+*------------------------------------------------------------*
+ Node = 68
+*------------------------------------------------------------*
+if Imputed ss_std >= 0.40709
+AND Imputed ss_mean >= 0.76992
+AND Imputed domestic_gross < 145735 or MISSING
+then 
+ Tree Node Identifier   = 68
+ Number of Observations = 154
+ Predicted: audience_score_positive=True = 0.45
+ Predicted: audience_score_positive=False = 0.55
+ 
+*------------------------------------------------------------*
+ Node = 69
+*------------------------------------------------------------*
+if Imputed ss_std >= 0.40709
+AND Imputed ss_mean >= 0.76992
+AND Imputed domestic_gross >= 145735
+then 
+ Tree Node Identifier   = 69
+ Number of Observations = 73
+ Predicted: audience_score_positive=True = 0.74
+ Predicted: audience_score_positive=False = 0.26
+ 

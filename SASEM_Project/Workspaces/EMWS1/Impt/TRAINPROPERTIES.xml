@@ -5,8 +5,8 @@
  Maxdepth="6" MinCatSize="5" Nrules="5" Nsurrs="2" Splitsize="." Indicator="NONE"
  IndicatorRole="REJECTED" ReplaceVariable="N" HideVariable="Y" IndicatorSource="IMPUTED"
  ForceRun="N" RunAction="Train" Component="Impute" RawCreateTime="1888435973.4" CreateTime="03NOV2019:21:32:53"
- RunId="abf0418f-0a47-4ff1-8fdf-de5a6196c3e4" RawLastTimeRun="1888440750.2" RawRunTime="26.907999992"
- LastTimeRun="03NOV2019:22:52:30" RunTime="0 Hr. 0 Min. 26.91 Sec.">
+ RunId="991711ce-9dd7-45ec-bb97-cdadf14552a0" RawLastTimeRun="1889626274.8" RawRunTime="19.16899991"
+ LastTimeRun="17NOV2019:16:11:15" RunTime="0 Hr. 0 Min. 19.17 Sec.">
 <VARIABLEPROPERTIES/>
 <FILEPROPERTIES/>
 </_ROOT_>

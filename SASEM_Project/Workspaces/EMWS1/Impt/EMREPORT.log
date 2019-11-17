@@ -1,30 +1,30 @@
 *------------------------------------------------------------*
 * Report Log
-Date:                November 03, 2019
-Time:                22:52:56
+Date:                November 17, 2019
+Time:                16:11:33
 *------------------------------------------------------------*
-26977  %let _nimpute = 0;
-26978  data EMWS1.Impt_RESULT;
-26979  label NAME = "%sysfunc(sasmsg(sashelp.dmine, meta_name_vlabel,        NOQUOTE))" METHOD = "%sysfunc(sasmsg(sashelp.dmine, rpt_imputemethod_vlabel, NOQUOTE))" IMPUTED = "%sysfunc(sasmsg(sashelp.dmine, rpt_imputedvar_vlabel,   NOQUOTE))" INDICATOR =
-26980     "%sysfunc(sasmsg(sashelp.dmine, rpt_indicatorvar_vlabel, NOQUOTE))" VALUE = "%sysfunc(sasmsg(sashelp.dmine, rpt_imputevalue_vlabel,  NOQUOTE))" ROLE = "%sysfunc(sasmsg(sashelp.dmine, meta_role_vlabel,        NOQUOTE))" LEVEL =
-26981     "%sysfunc(sasmsg(sashelp.dmine, meta_level_vlabel,       NOQUOTE))" LABEL = "%sysfunc(sasmsg(sashelp.dmine, meta_label_vlabel,       NOQUOTE))" TRAIN = "%sysfunc(sasmsg(sashelp.dmine, rpt_missingcount_vlabel, NOQUOTE, TRAIN))";
-26982  set EMWS1.Impt_META(where=(IMPUTED ne '') keep=NAME METHOD IMP VALUE ROLE NMISS LEVEL LABEL rename=(IMP=IMPUTED NMISS=TRAIN)) end=eof;
-26983  if eof then call symput('_nimpute', '1');
-26984  run;
+36767  %let _nimpute = 0;
+36768  data EMWS1.Impt_RESULT;
+36769  label NAME = "%sysfunc(sasmsg(sashelp.dmine, meta_name_vlabel,        NOQUOTE))" METHOD = "%sysfunc(sasmsg(sashelp.dmine, rpt_imputemethod_vlabel, NOQUOTE))" IMPUTED = "%sysfunc(sasmsg(sashelp.dmine, rpt_imputedvar_vlabel,   NOQUOTE))" INDICATOR =
+36770     "%sysfunc(sasmsg(sashelp.dmine, rpt_indicatorvar_vlabel, NOQUOTE))" VALUE = "%sysfunc(sasmsg(sashelp.dmine, rpt_imputevalue_vlabel,  NOQUOTE))" ROLE = "%sysfunc(sasmsg(sashelp.dmine, meta_role_vlabel,        NOQUOTE))" LEVEL =
+36771     "%sysfunc(sasmsg(sashelp.dmine, meta_level_vlabel,       NOQUOTE))" LABEL = "%sysfunc(sasmsg(sashelp.dmine, meta_label_vlabel,       NOQUOTE))" TRAIN = "%sysfunc(sasmsg(sashelp.dmine, rpt_missingcount_vlabel, NOQUOTE, TRAIN))";
+36772  set EMWS1.Impt_META(where=(IMPUTED ne '') keep=NAME METHOD IMP VALUE ROLE NMISS LEVEL LABEL rename=(IMP=IMPUTED NMISS=TRAIN)) end=eof;
+36773  if eof then call symput('_nimpute', '1');
+36774  run;
 
 NOTE: Variable INDICATOR is uninitialized.
 NOTE: There were 13 observations read from the data set EMWS1.IMPT_META.
       WHERE IMPUTED not = ' ';
 NOTE: The data set EMWS1.IMPT_RESULT has 13 observations and 8 variables.
 NOTE: DATA statement used (Total process time):
-      real time           0.01 seconds
-      cpu time            0.01 seconds
+      real time           0.02 seconds
+      cpu time            0.00 seconds
       
 
-26985  proc print data=EMWS1.Impt_RESULT(obs=500) label noobs;
-26986  title9 "%sysfunc(sasmsg(sashelp.dmine, rpt_imputationsummary_title, NOQUOTE))";
-26987  title10 "%sysfunc(sasmsg(sashelp.dmine, rpt_numberobs_title,         NOQUOTE))";
-26988  run;
+36775  proc print data=EMWS1.Impt_RESULT(obs=500) label noobs;
+36776  title9 "%sysfunc(sasmsg(sashelp.dmine, rpt_imputationsummary_title, NOQUOTE))";
+36777  title10 "%sysfunc(sasmsg(sashelp.dmine, rpt_numberobs_title,         NOQUOTE))";
+36778  run;
 
 NOTE: There were 13 observations read from the data set EMWS1.IMPT_RESULT.
 NOTE: The PROCEDURE PRINT printed page 3.
@@ -33,33 +33,33 @@ NOTE: PROCEDURE PRINT used (Total process time):
       cpu time            0.00 seconds
       
 
-26989  proc freq data=EMWS1.Impt_RESULT noprint;
-26990  table train /out=WORK.ImptSUMMARY nocum;
-26991  run;
+36779  proc freq data=EMWS1.Impt_RESULT noprint;
+36780  table train /out=WORK.ImptSUMMARY nocum;
+36781  run;
 
 NOTE: There were 13 observations read from the data set EMWS1.IMPT_RESULT.
 NOTE: The data set WORK.IMPTSUMMARY has 4 observations and 3 variables.
 NOTE: PROCEDURE FREQ used (Total process time):
-      real time           0.02 seconds
+      real time           0.01 seconds
       cpu time            0.00 seconds
       
 
-26992  proc sort data=WORK.ImptSUMMARY NOTHREADS;
-26993  by descending TRAIN;
-26994  run;
+36782  proc sort data=WORK.ImptSUMMARY NOTHREADS;
+36783  by descending TRAIN;
+36784  run;
 
 NOTE: There were 4 observations read from the data set WORK.IMPTSUMMARY.
 NOTE: The data set WORK.IMPTSUMMARY has 4 observations and 3 variables.
 NOTE: PROCEDURE SORT used (Total process time):
       real time           0.00 seconds
-      cpu time            0.00 seconds
+      cpu time            0.01 seconds
       
 
-26995  proc print data=WORK.ImptSUMMARY(obs=100) label;
-26996  label COUNT = "%sysfunc(sasmsg(sashelp.dmine, rpt_varcount_vlabel,  NOQUOTE))" PERCENT = "%sysfunc(sasmsg(sashelp.dmine, rpt_varpercent_vlabel,  NOQUOTE))";
-26997  title9 ' ';
-26998  title10 "%sysfunc(sasmsg(sashelp.dmine, rpt_missingvardistribution_title, NOQUOTE))";
-26999  run;
+36785  proc print data=WORK.ImptSUMMARY(obs=100) label;
+36786  label COUNT = "%sysfunc(sasmsg(sashelp.dmine, rpt_varcount_vlabel,  NOQUOTE))" PERCENT = "%sysfunc(sasmsg(sashelp.dmine, rpt_varpercent_vlabel,  NOQUOTE))";
+36787  title9 ' ';
+36788  title10 "%sysfunc(sasmsg(sashelp.dmine, rpt_missingvardistribution_title, NOQUOTE))";
+36789  run;
 
 NOTE: There were 4 observations read from the data set WORK.IMPTSUMMARY.
 NOTE: The PROCEDURE PRINT printed page 4.
@@ -68,32 +68,32 @@ NOTE: PROCEDURE PRINT used (Total process time):
       cpu time            0.00 seconds
       
 
-27000  data EMWS1.Impt_EMSCOREVAR;
-27001  length Name $32 formula $70 file $200;
-27002  keep NAME Formula file;
-27003  if _N_=1 then do;
-27004  file = "IMPUTECODE\"!!"_POSTALL_.sas";
-27005  output;
-27006  end;
-27007  set EMWS1.Impt_META end=eof;
-27008  *set EMWS1.Impt_RESULT end=eof;
-27009  if M ne '' then do;
-27010  NAME= M;
-27011  file="IMPUTECODE\"!!strip(NAME)!!'.sas';
-27012  output;
-27013  end;
-27014  if IMP ne '' then do;
-27015  NAME= IMP;
-27016  file="IMPUTECODE\"!!strip(NAME)!!'.sas';
-27017  output;
-27018  end;
-27019  run;
+36790  data EMWS1.Impt_EMSCOREVAR;
+36791  length Name $32 formula $70 file $200;
+36792  keep NAME Formula file;
+36793  if _N_=1 then do;
+36794  file = "IMPUTECODE\"!!"_POSTALL_.sas";
+36795  output;
+36796  end;
+36797  set EMWS1.Impt_META end=eof;
+36798  *set EMWS1.Impt_RESULT end=eof;
+36799  if M ne '' then do;
+36800  NAME= M;
+36801  file="IMPUTECODE\"!!strip(NAME)!!'.sas';
+36802  output;
+36803  end;
+36804  if IMP ne '' then do;
+36805  NAME= IMP;
+36806  file="IMPUTECODE\"!!strip(NAME)!!'.sas';
+36807  output;
+36808  end;
+36809  run;
 
 NOTE: Variable formula is uninitialized.
 NOTE: There were 40 observations read from the data set EMWS1.IMPT_META.
 NOTE: The data set EMWS1.IMPT_EMSCOREVAR has 54 observations and 3 variables.
 NOTE: DATA statement used (Total process time):
-      real time           0.00 seconds
+      real time           0.01 seconds
       cpu time            0.00 seconds
       
 

@@ -1,0 +1,31 @@
+ 
+                                                                                                                                                                                                                                                                
+ 
+ 
+Summary Statistics for Class Targets
+
+Data=DATA
+
+                           Numeric    Formatted    Frequency
+       Variable             Value       Value        Count      Percent    Label
+
+audience_score_positive       .         False         2558      52.4395         
+audience_score_positive       .         True          2320      47.5605         
+
+
+Data=TRAIN
+
+                           Numeric    Formatted    Frequency
+       Variable             Value       Value        Count      Percent    Label
+
+audience_score_positive       .         False         1279      52.4610         
+audience_score_positive       .         True          1159      47.5390         
+
+
+Data=VALIDATE
+
+                           Numeric    Formatted    Frequency
+       Variable             Value       Value        Count      Percent    Label
+
+audience_score_positive       .         False         1279      52.4180         
+audience_score_positive       .         True          1161      47.5820         

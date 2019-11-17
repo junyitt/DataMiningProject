@@ -1,0 +1,75 @@
+*------------------------------------------------------------*
+User:                jy
+Date:                November 15, 2019
+Time:                23:44:54
+*------------------------------------------------------------*
+* Training Output
+*------------------------------------------------------------*
+ 
+ 
+ 
+ 
+Variable Summary
+ 
+            Measurement    Frequency
+Role           Level         Count
+ 
+ID           NOMINAL            1
+INPUT        BINARY            25
+INPUT        INTERVAL          14
+REJECTED     BINARY             1
+REJECTED     INTERVAL           2
+TARGET       BINARY             1
+ 
+ 
+ 
+ 
+Partition Summary
+ 
+                                     Number of
+Type             Data Set          Observations
+ 
+DATA        EMWS1.FIMPORT_train        4878
+TRAIN       EMWS1.Part_TRAIN           2438
+VALIDATE    EMWS1.Part_VALIDATE        2440
+
+
+*------------------------------------------------------------*
+* Score Output
+*------------------------------------------------------------*
+
+
+*------------------------------------------------------------*
+* Report Output
+*------------------------------------------------------------*
+ 
+ 
+ 
+ 
+Summary Statistics for Class Targets
+ 
+Data=DATA
+ 
+                           Numeric    Formatted    Frequency
+       Variable             Value       Value        Count      Percent    Label
+ 
+audience_score_positive       .         False         2558      52.4395
+audience_score_positive       .         True          2320      47.5605
+ 
+ 
+Data=TRAIN
+ 
+                           Numeric    Formatted    Frequency
+       Variable             Value       Value        Count      Percent    Label
+ 
+audience_score_positive       .         False         1279      52.4610
+audience_score_positive       .         True          1159      47.5390
+ 
+ 
+Data=VALIDATE
+ 
+                           Numeric    Formatted    Frequency
+       Variable             Value       Value        Count      Percent    Label
+ 
+audience_score_positive       .         False         1279      52.4180
+audience_score_positive       .         True          1161      47.5820
