@@ -1,7 +1,7 @@
 ## Milestone 4 Submission:
 
 #### Video:  
-- to be uploaded
+<https://www.youtube.com/watch?v=IV1sb03tCKE>
 
 #### Report (pdf):   
 <https://github.com/junyitt/DataMiningProject/blob/master/Milestone4_DataInterpretation/Report_Milestone4.pdf>  
