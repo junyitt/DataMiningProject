@@ -1,9 +1,17 @@
-                                                                                                                                                                                                                             18:01 Sunday, November 17, 2019   1
+                                                            22:25 Sunday, November 17, 2019   9
 
-Obs    NAME                     LABEL                        NRULES    IMPORTANCE    VIMPORTANCE     RATIO
 
-  1    IMP_ss_mean              Imputed ss_mean                 1        1.00000       1.00000      1.00000
-  2    IMP_user_rating_count    Imputed user_rating_count       2        0.48707       0.46689      0.95856
-  3    IMP_ss_std               Imputed ss_std                  2        0.45121       0.48224      1.06878
-  4    genre_HistDocument                                       1        0.32658       0.42739      1.30868
-  5    IMP_domestic_gross       Imputed domestic_gross          1        0.20270       0.23607      1.16467
+
+
+
+
+
+ 
+
+Obs  NAME                   LABEL                      NRULES  IMPORTANCE  VIMPORTANCE   RATIO
+
+  1  IMP_ss_mean            Imputed ss_mean               1      1.00000     1.00000    1.00000
+  2  IMP_user_rating_count  Imputed user_rating_count     2      0.48707     0.46689    0.95856
+  3  IMP_ss_std             Imputed ss_std                2      0.45121     0.48224    1.06878
+  4  genre_HistDocument                                   1      0.32658     0.42739    1.30868
+  5  IMP_domestic_gross     Imputed domestic_gross        1      0.20270     0.23607    1.16467

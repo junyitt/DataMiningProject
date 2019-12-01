@@ -1,0 +1,127 @@
+*------------------------------------------------------------*
+ Node = 4
+*------------------------------------------------------------*
+if Imputed total_gross < 1.101E8 or MISSING
+then 
+ Tree Node Identifier   = 4
+ Number of Observations = 2198
+ Predicted: _SEGMENT_=1  = 0.00
+ Predicted: _SEGMENT_=2  = 1.00
+ 
+*------------------------------------------------------------*
+ Node = 10
+*------------------------------------------------------------*
+if genre_Sci-fi IS ONE OF: 0 or MISSING
+AND Imputed total_gross < 1.82E8 AND Imputed total_gross >= 1.101E8
+then 
+ Tree Node Identifier   = 10
+ Number of Observations = 62
+ Predicted: _SEGMENT_=1  = 0.08
+ Predicted: _SEGMENT_=2  = 0.92
+ 
+*------------------------------------------------------------*
+ Node = 12
+*------------------------------------------------------------*
+if Imputed total_gross < 5.058E8 AND Imputed total_gross >= 1.82E8 or MISSING
+AND Imputed ss_count < 44.5
+then 
+ Tree Node Identifier   = 12
+ Number of Observations = 24
+ Predicted: _SEGMENT_=1  = 0.08
+ Predicted: _SEGMENT_=2  = 0.92
+ 
+*------------------------------------------------------------*
+ Node = 13
+*------------------------------------------------------------*
+if Imputed total_gross >= 5.058E8
+AND Imputed ss_count < 44.5
+then 
+ Tree Node Identifier   = 13
+ Number of Observations = 11
+ Predicted: _SEGMENT_=1  = 1.00
+ Predicted: _SEGMENT_=2  = 0.00
+ 
+*------------------------------------------------------------*
+ Node = 18
+*------------------------------------------------------------*
+if genre_Sci-fi IS ONE OF: 1
+AND R IS ONE OF: 1
+AND Imputed total_gross < 1.82E8 AND Imputed total_gross >= 1.101E8
+then 
+ Tree Node Identifier   = 18
+ Number of Observations = 5
+ Predicted: _SEGMENT_=1  = 0.40
+ Predicted: _SEGMENT_=2  = 0.60
+ 
+*------------------------------------------------------------*
+ Node = 19
+*------------------------------------------------------------*
+if genre_Sci-fi IS ONE OF: 1
+AND R IS ONE OF: 0 or MISSING
+AND Imputed total_gross < 1.82E8 AND Imputed total_gross >= 1.101E8
+then 
+ Tree Node Identifier   = 19
+ Number of Observations = 10
+ Predicted: _SEGMENT_=1  = 1.00
+ Predicted: _SEGMENT_=2  = 0.00
+ 
+*------------------------------------------------------------*
+ Node = 22
+*------------------------------------------------------------*
+if Imputed total_gross < 2.087E8 AND Imputed total_gross >= 1.82E8
+AND Imputed ss_count < 190.5 AND Imputed ss_count >= 44.5
+then 
+ Tree Node Identifier   = 22
+ Number of Observations = 6
+ Predicted: _SEGMENT_=1  = 0.17
+ Predicted: _SEGMENT_=2  = 0.83
+ 
+*------------------------------------------------------------*
+ Node = 23
+*------------------------------------------------------------*
+if Imputed total_gross < 2.087E8 AND Imputed total_gross >= 1.82E8
+AND Imputed ss_count >= 190.5 or MISSING
+then 
+ Tree Node Identifier   = 23
+ Number of Observations = 7
+ Predicted: _SEGMENT_=1  = 1.00
+ Predicted: _SEGMENT_=2  = 0.00
+ 
+*------------------------------------------------------------*
+ Node = 25
+*------------------------------------------------------------*
+if Imputed user_rating_count >= 12089.5 or MISSING
+AND Imputed total_gross >= 2.087E8 or MISSING
+AND Imputed ss_count >= 44.5 or MISSING
+then 
+ Tree Node Identifier   = 25
+ Number of Observations = 100
+ Predicted: _SEGMENT_=1  = 0.99
+ Predicted: _SEGMENT_=2  = 0.01
+ 
+*------------------------------------------------------------*
+ Node = 26
+*------------------------------------------------------------*
+if genre_DramaTele IS ONE OF: 1
+AND Imputed user_rating_count < 12089.5
+AND Imputed total_gross >= 2.087E8 or MISSING
+AND Imputed ss_count >= 44.5 or MISSING
+then 
+ Tree Node Identifier   = 26
+ Number of Observations = 5
+ Predicted: _SEGMENT_=1  = 0.40
+ Predicted: _SEGMENT_=2  = 0.60
+ 
+*------------------------------------------------------------*
+ Node = 27
+*------------------------------------------------------------*
+if genre_DramaTele IS ONE OF: 0 or MISSING
+AND Imputed user_rating_count < 12089.5
+AND Imputed total_gross >= 2.087E8 or MISSING
+AND Imputed ss_count >= 44.5 or MISSING
+then 
+ Tree Node Identifier   = 27
+ Number of Observations = 10
+ Predicted: _SEGMENT_=1  = 1.00
+ Predicted: _SEGMENT_=2  = 0.00
+ 

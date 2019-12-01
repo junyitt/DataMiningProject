@@ -1,0 +1,67 @@
+ 
+                                                                                                                                                                                                                                                                
+ 
+ 
+Variable Summary
+
+            Measurement    Frequency
+Role           Level         Count
+
+ASSESS       NOMINAL            1   
+ID           INTERVAL           1   
+ID           NOMINAL            1   
+INPUT        BINARY            25   
+INPUT        INTERVAL          13   
+REJECTED     BINARY             1   
+REJECTED     INTERVAL           4   
+REJECTED     NOMINAL            1   
+SEGMENT      NOMINAL            1   
+TARGET       BINARY             1   
+ 
+                                                                                                                                                                                                                                                                
+ 
+ 
+Frequencies: _SEGMENT_
+
+                                     Percent of
+ Segment     Segment    Frequency       Total
+Variable      Value       Count       Frequency
+
+_SEGMENT_       2           2287       93.8064 
+_SEGMENT_       1            151        6.1936 
+ 
+                                                                                                                                                                                                                                                                
+ 
+Variable: _SEGMENT_ Segment: 2 Count: 2287
+Decision Tree Importance Profiles
+
+Variable                   Worth     Rank
+
+IMP_total_gross          0.086838      1 
+IMP_foreign_gross        0.081216      2 
+IMP_domestic_gross       0.077046      3 
+IMP_domestic_opening     0.074571      4 
+IMP_user_rating_count    0.047273      5 
+IMP_ss_count             0.041373      6 
+tomatometer_count        0.040636      7 
+genre_Sci_fi             0.012498      8 
+genre_Fantasy            0.012413      9 
+genre_Adventure          0.009925     10 
+ 
+                                                                                                                                                                                                                                                                
+ 
+Variable: _SEGMENT_ Segment: 1 Count: 151
+Decision Tree Importance Profiles
+
+Variable                   Worth     Rank
+
+IMP_total_gross          0.086838      1 
+IMP_foreign_gross        0.081216      2 
+IMP_domestic_gross       0.077046      3 
+IMP_domestic_opening     0.074571      4 
+IMP_user_rating_count    0.047273      5 
+IMP_ss_count             0.041373      6 
+tomatometer_count        0.040636      7 
+genre_Sci_fi             0.012498      8 
+genre_Fantasy            0.012413      9 
+genre_Adventure          0.009925     10 

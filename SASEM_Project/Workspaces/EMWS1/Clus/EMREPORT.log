@@ -1,0 +1,2045 @@
+*------------------------------------------------------------*
+* Report Log
+Date:                December 01, 2019
+Time:                16:11:22
+*------------------------------------------------------------*
+13589  data WORK.M0T2G8F_;
+13590  set WORK.M0T2G8F_;
+13591  if role eq 'REJECTED' then role = 'INPUT';
+13592  run;
+
+NOTE: There were 38 observations read from the data set WORK.M0T2G8F_.
+NOTE: The data set WORK.M0T2G8F_ has 38 observations and 21 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+13593  data WORK.M0T2G8F_;
+13594  set WORK.M0T2G8F_ end=_eof_ nobs=_nobs_;
+13595  output;
+13596  if _eof_ then do;
+13597  name = '_SEGMENT_';
+13598  ROLE = 'TARGET';
+13599  LEVEL = 'NOMINAL';
+13600  LABEL = 'Segment Variable';
+13601  TYPE = 'N';
+13602  FORMAT = '';
+13603  INFORMAT = '';
+13604  USE='Y';
+13605  output;
+13606  end;
+13607  run;
+
+NOTE: There were 38 observations read from the data set WORK.M0T2G8F_.
+NOTE: The data set WORK.M0T2G8F_ has 39 observations and 21 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+13608  *------------------------------------------------------------*;
+13609  * Clus: Create decision matrix;
+13610  *------------------------------------------------------------*;
+13611  *------------------------------------------------------------* ;
+13612  * Clus: Tree Variables Macro ;
+13613  *------------------------------------------------------------* ;
+13614  %macro EM_TREEVARS;
+13615      G IMP_domestic_gross IMP_domestic_opening IMP_foreign_gross
+13616     IMP_markets_missing IMP_runtime IMP_ss_count IMP_ss_mean IMP_ss_median
+13617     IMP_ss_p25 IMP_ss_p75 IMP_ss_std IMP_total_gross IMP_user_rating_count NC17 NR
+13618     PG PG_13 R genre_Action genre_Adventure genre_AnimationManga
+13619     genre_ArthouseInter genre_ClassicsCult genre_Comedy genre_DramaTele
+13620     genre_FamilyKids genre_Fantasy genre_FitnessSports genre_HistDocument
+13621     genre_Horror genre_MusicalPerfarts genre_Romance genre_Sci_fi
+13622     genre_Special_Interest genre_ThrillMysSusp genre_Western tomatometer_count
+13623  %mend EM_TREEVARS;
+13624  *------------------------------------------------------------* ;
+13625  * Clus: Tree Targets Macro ;
+13626  *------------------------------------------------------------* ;
+13627  %macro EM_TREETARGETS;
+13628      _SEGMENT_
+13629  %mend EM_TREETARGETS;
+13630  data EMWS1.EM_Clus / view=EMWS1.EM_Clus;
+13631  set EMWS1.Clus_TRAIN(keep=%EM_TREEVARS %EM_TREETARGETS);
+13632  run;
+
+NOTE: DATA STEP view saved on file EMWS1.EM_CLUS.
+NOTE: A stored DATA STEP view cannot run under a different operating system.
+NOTE: View EMWS1.CLUS_TRAIN.VIEW used (Total process time):
+      real time           0.07 seconds
+      cpu time            0.06 seconds
+      
+NOTE: DATA statement used (Total process time):
+      real time           0.09 seconds
+      cpu time            0.07 seconds
+      
+
+13633  *------------------------------------------------------------* ;
+13634  * Clus: Interval Inputs Macro ;
+13635  *------------------------------------------------------------* ;
+13636  %macro INTINPUTS;
+13637      IMP_domestic_gross IMP_domestic_opening IMP_foreign_gross IMP_runtime
+13638     IMP_ss_count IMP_ss_mean IMP_ss_median IMP_ss_p25 IMP_ss_p75 IMP_ss_std
+13639     IMP_total_gross IMP_user_rating_count tomatometer_count
+13640  %mend INTINPUTS;
+13641  *------------------------------------------------------------* ;
+13642  * Clus: Binary and Nominal Inputs Macro ;
+13643  *------------------------------------------------------------* ;
+13644  %macro NOMINPUTS;
+13645      G IMP_markets_missing NC17 NR PG PG_13 R genre_Action genre_Adventure
+13646     genre_AnimationManga genre_ArthouseInter genre_ClassicsCult genre_Comedy
+13647     genre_DramaTele genre_FamilyKids genre_Fantasy genre_FitnessSports
+13648     genre_HistDocument genre_Horror genre_MusicalPerfarts genre_Romance
+13649     genre_Sci_fi genre_Special_Interest genre_ThrillMysSusp genre_Western
+13650  %mend NOMINPUTS;
+13651  *------------------------------------------------------------* ;
+13652  * Clus: Ordinal Inputs Macro ;
+13653  *------------------------------------------------------------* ;
+13654  %macro ORDINPUTS;
+13655  
+13656  %mend ORDINPUTS;
+13657  *------------------------------------------------------------*;
+13658  * Clus: Run ARBOR procedure;
+13659  *------------------------------------------------------------*;
+
+13660  proc arbor data=EMWS1.EM_Clus
+13661  MAXSURRS=5
+13662  ;
+13663  ;
+13664  input %INTINPUTS
+13665  / level = interval;
+13666  input %NOMINPUTS
+13667  / level=nominal;
+13668  target _SEGMENT_ / level=NOMINAL
+13669  Criterion=PROBCHISQ
+13670  ;
+13671  ;
+13672  Performance DISK
+13673  ;
+13674  MAKEMACRO NLEAVES=nleaves;
+NOTE: Variable _WARN_ is uninitialized.
+NOTE: 1488760 kilobytes of physical memory.
+NOTE: Will use 2438 out of 2438 training cases.
+NOTE: Using memory pool with 232467456 bytes.
+NOTE: Will not search for split on variable NC17.
+NOTE: Acceptable cases have the same value.
+NOTE: Option MINCATSIZE=5 may apply.
+NOTE: Passed training data 15 times.
+NOTE: Training used 2349992 bytes of work memory.
+NOTE: The subtree sequence contains 15 subtrees. The largest has 29 nodes and 15 leaves.
+NOTE: Using subtree with 21 nodes and 11 leaves.
+NOTE: Created macro variable NLEAVES equal to 11.
+13675  save
+13676  MODEL=EMWS1.Clus_PLOTDS
+13677  SEQUENCE=EMWS1.Clus_OUTSEQ
+13678  IMPORTANCE=EMWS1.Clus_OUTIMPORT
+13679  NODESTAT=EMWS1.Clus_OUTNODES
+13680  SUMMARY=WORK.OUTSUMMARY_TREE_049972H
+13681  STATSBYNODE=WORK.OUTSTATS_TREE_049972H
+13682  Pathlistnonmissing = WORK.OUTPATH_TREE_049972H
+13683  Rules = WORK.OUTRULES_TREE_049972H
+13684  ;
+NOTE: The data set EMWS1.CLUS_OUTIMPORT has 38 observations and 5 variables.
+NOTE: The data set EMWS1.CLUS_PLOTDS has 1439 observations and 4 variables.
+NOTE: The data set EMWS1.CLUS_OUTNODES has 21 observations and 20 variables.
+NOTE: The data set WORK.OUTPATH_TREE_049972H has 62 observations and 7 variables.
+NOTE: The data set WORK.OUTRULES_TREE_049972H has 481 observations and 6 variables.
+NOTE: The data set EMWS1.CLUS_OUTSEQ has 15 observations and 11 variables.
+NOTE: The data set WORK.OUTSTATS_TREE_049972H has 84 observations and 5 variables.
+NOTE: The data set WORK.OUTSUMMARY_TREE_049972H has 12 observations and 5 variables.
+13685  run;
+
+13686  quit;
+
+NOTE: There were 2438 observations read from the data set EMWS1.PART_TRAIN.
+NOTE: There were 2438 observations read from the data set EMWS1.IMPT_TRAIN.
+NOTE: View EMWS1.EM_CLUS.VIEW used (Total process time):
+      real time           0.44 seconds
+      cpu time            0.39 seconds
+      
+NOTE: There were 2438 observations read from the data set EMWS1.CLUS_TRAIN.
+NOTE: There were 2438 observations read from the data set EMWS1.EM_CLUS.
+NOTE: The data set WORK._NAMEDAT has 2 observations and 5 variables.
+NOTE: PROCEDURE ARBOR used (Total process time):
+      real time           0.46 seconds
+      cpu time            0.39 seconds
+      
+
+13687  data EMWS1.Clus_OUTIMPORT;
+13688  set EMWS1.Clus_OUTIMPORT;
+13689  label NAME = "%sysfunc(sasmsg(sashelp.dmine, meta_name_vlabel, noquote))" LABEL = "%sysfunc(sasmsg(sashelp.dmine, meta_label_vlabel, noquote))" NRULES = "%sysfunc(sasmsg(sashelp.dmine, rpt_nrules_vlabel, noquote))" IMPORTANCE =
+13690     "%sysfunc(sasmsg(sashelp.dmine, rpt_importance_vlabel, noquote))" NSURROGATES = "%sysfunc(sasmsg(sashelp.dmine, rpt_nsurrogates_vlabel, noquote))"
+13691  VIMPORTANCE = "%sysfunc(sasmsg(sashelp.dmine, rpt_vimportance_vlabel, noquote))" RATIO = "%sysfunc(sasmsg(sashelp.dmine, rpt_ratio_vlabel, noquote))"
+13692  ;
+13693  run;
+
+NOTE: Variable VIMPORTANCE is uninitialized.
+NOTE: Variable RATIO is uninitialized.
+NOTE: There were 38 observations read from the data set EMWS1.CLUS_OUTIMPORT.
+NOTE: The data set EMWS1.CLUS_OUTIMPORT has 38 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+13694  filename x "C:\Users\jy\Desktop\DataMiningProject\SASEM_Project\Workspaces\EMWS1\Clus\ENGLISHRULES.txt" encoding='utf-8' NOBOM;
+
+13695  data temp;
+13696  length varname $25;
+13697  retain varname;
+13698  set WORK.OUTPATH_TREE_049972H;
+13699  if ^missing(variable) then varname=variable;
+13700  else if ^missing(var_name) then varname=var_name;
+13701  output;
+13702  run;
+
+NOTE: There were 62 observations read from the data set WORK.OUTPATH_TREE_049972H.
+NOTE: The data set WORK.TEMP has 62 observations and 8 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+13703  proc sort data=temp;
+13704  by node;
+13705  run;
+
+NOTE: There were 62 observations read from the data set WORK.TEMP.
+NOTE: The data set WORK.TEMP has 62 observations and 8 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+13706  proc sort data=EMWS1.Clus_OUTNODES out=outnodes;
+13707  by node;
+13708  run;
+
+NOTE: There were 21 observations read from the data set EMWS1.CLUS_OUTNODES.
+NOTE: The data set WORK.OUTNODES has 21 observations and 20 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+13709  data temp;
+13710  merge temp(in=_a) outnodes(keep= node
+13711  NPRIORS
+13712  P__SEGMENT_1
+13713  P__SEGMENT_2
+13714  );
+13715  by node;
+13716  if _a;
+13717  run;
+
+NOTE: There were 62 observations read from the data set WORK.TEMP.
+NOTE: There were 21 observations read from the data set WORK.OUTNODES.
+NOTE: The data set WORK.TEMP has 62 observations and 11 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+13718  proc sort data=temp;
+13719  by node descending varname descending numeric_value;
+13720  run;
+
+NOTE: There were 62 observations read from the data set WORK.TEMP.
+NOTE: The data set WORK.TEMP has 62 observations and 11 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+13721  data _null_;
+13722  file x;
+13723  set temp;
+13724  by node descending varname;
+13725  retain origvar oldnode string;
+13726  length origvar $32 oldnode 8 string $200;
+13727  if _n_ = 1 then do;
+13728  origvar = varname;
+13729  oldnode = node;
+13730  end;
+13731  if first.node then do;
+13732  put "&EM_CODEBAR";
+13733  put " Node = " node;
+13734  put "&EM_CODEBAR";
+13735  end;
+13736  if first.varname then do;
+13737  if RELATION ^in ("=", "ISMISSING", "ISNOTMISSING") then do;
+13738  if MISSING(CHARACTER_VALUE) then do;
+13739  if NUMERIC_VALUE ne . then do;
+13740  if ^first.node then do;
+13741  string= "AND "|| strip(varname)||" "||strip(relation)||" "||strip(numeric_value);
+13742  end;
+13743  else do;
+13744  string= "if "|| strip(varname)||" "||strip(relation)||" "||strip(numeric_value);
+13745  end;
+13746  end;
+13747  end;
+13748  else do;
+13749  if ^first.node then do;
+13750  string= "AND "|| strip(varname)||" "||strip(relation)||" "||strip(character_value);
+13751  end;
+13752  else do;
+13753  string= "if "|| strip(varname)||" "||strip(relation)||" "||strip(character_value);
+13754  end;
+13755  end;
+13756  end;
+13757  else if RELATION in ("=") then do;
+13758  if ^first.node then do;
+13759  string = "AND "||strip(varname) ||" IS ONE OF: "||character_value;
+13760  end;
+13761  else do;
+13762  string = "if "|| strip(varname) ||" IS ONE OF: "||character_value;
+13763  end;
+13764  end;
+13765  else if RELATION in ("ISMISSING") then do;
+13766  if ^first.node then do;
+13767  string = " AND "|| strip(varname) || " equals Missing";
+13768  end;
+13769  else do;
+13770  string = "if "|| strip(varname) ||" equals Missing";
+13771  end;
+13772  end;
+13773  else if RELATION in ("ISNOTMISSING") then do;
+13774  if ^first.node then do;
+13775  string = " AND "|| strip(varname) || " equals All Values";
+13776  end;
+13777  else do;
+13778  string = "if "|| strip(varname) ||" equals All Values";
+13779  end;
+13780  end;
+13781  if ^missing(varname) then origvar = varname;
+13782  oldnode=node;
+13783  end;
+13784  else do;
+13785  if RELATION ^in ("=", "ISMISSING", "ISNOTMISSING") then do;
+13786  if MISSING(CHARACTER_VALUE) then do;
+13787  if NUMERIC_VALUE ne . then do;
+13788  if ^MISSING(string) then string= strip(string)||" AND "|| strip(varname)||" "||strip(relation)||" "||strip(numeric_value);
+13789  else string= " if "|| strip(varname)||" "||strip(relation)||" "||strip(numeric_value);
+13790  end;
+13791  end;
+13792  else do;
+13793  if ^MISSING(string) then string= strip(string)||" AND "|| strip(varname)||" "||strip(relation)||" "||strip(character_value);
+13794  else string= " if "|| strip(varname)||" "||strip(relation)||" "||strip(character_value);
+13795  end;
+13796  end;
+13797  else if RELATION in ("=") then do;
+13798  string = strip(string)||", "||strip(character_value);
+13799  end;
+13800  else if RELATION in ("ISMISSING") then do;
+13801  end;
+13802  if ^missing(varname) then origvar = varname;
+13803  oldnode=node;
+13804  end;
+13805  if last.varname then do;
+13806  if RELATION in ("ISMISSING") then do;
+13807  if ^first.varname then do;
+13808  string = strip(string) || " or MISSING";
+13809  end;
+13810  end;
+13811  put string;
+13812  if ^missing(varname) then origvar = varname;
+13813  oldnode=node;
+13814  end;
+13815  if last.node then do;
+13816  put "then ";
+13817  put " Tree Node Identifier   = " node;
+13818  put " Number of Observations = " NPRIORS;
+13819  put " Predicted: _SEGMENT_=1  = " P__SEGMENT_1;
+13820  put " Predicted: _SEGMENT_=2  = " P__SEGMENT_2;
+13821  put " ";
+13822  if ^missing(varname) then origvar = varname;
+13823  oldnode=node;
+13824  end;
+13825  run;
+
+NOTE: Numeric values have been converted to character values at the places given by: (Line):(Column).
+      13741:67    13744:66    13788:108   13789:72    
+NOTE: The file X is:
+      Filename=C:\Users\jy\Desktop\DataMiningProject\SASEM_Project\Workspaces\EMWS1\Clus\ENGLISHRULES.txt,
+      RECFM=V,LRECL=131068,File Size (bytes)=0,
+      Last Modified=01Dec2019:16:11:22,
+      Create Time=01Dec2019:14:42:37
+
+NOTE: 127 records were written to the file X.
+      The minimum record length was 1.
+      The maximum record length was 77.
+NOTE: There were 62 observations read from the data set WORK.TEMP.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+13826  filename x;
+NOTE: Fileref X has been deassigned.
+
+13827  /* belowtext */
+13828  data templabel;
+13829  set WORK.OUTRULES_TREE_049972H;
+13830  if ((ROLE="PRIMARY") AND (STAT ="LABEL"));
+13831  rename character_value = belowtext;
+13832  keep NODE character_value;
+13833  run;
+
+NOTE: There were 481 observations read from the data set WORK.OUTRULES_TREE_049972H.
+NOTE: The data set WORK.TEMPLABEL has 8 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+13834  data tempvar;
+13835  set WORK.OUTRULES_TREE_049972H;
+13836  if ((ROLE="PRIMARY") AND (STAT="VARIABLE"));
+13837  keep NODE character_value;
+13838  run;
+
+NOTE: There were 481 observations read from the data set WORK.OUTRULES_TREE_049972H.
+NOTE: The data set WORK.TEMPVAR has 10 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+13839  proc sort data=templabel;
+13840  by node;
+13841  run;
+
+NOTE: There were 8 observations read from the data set WORK.TEMPLABEL.
+NOTE: The data set WORK.TEMPLABEL has 8 observations and 2 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+13842  proc sort data=tempvar;
+13843  by node;
+13844  run;
+
+NOTE: There were 10 observations read from the data set WORK.TEMPVAR.
+NOTE: The data set WORK.TEMPVAR has 10 observations and 2 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+13845  data tempbelow;
+13846  merge templabel tempvar;
+13847  by node;
+13848  if missing(belowtext) then belowtext= character_value;
+13849  keep node belowtext;
+13850  run;
+
+NOTE: There were 8 observations read from the data set WORK.TEMPLABEL.
+NOTE: There were 10 observations read from the data set WORK.TEMPVAR.
+NOTE: The data set WORK.TEMPBELOW has 10 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+13851  proc sort data=tempbelow;
+13852  by node;
+13853  run;
+
+NOTE: There were 10 observations read from the data set WORK.TEMPBELOW.
+NOTE: The data set WORK.TEMPBELOW has 10 observations and 2 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+13854  /* abovetext */
+13855  data tempoutrules;
+13856  set WORK.OUTRULES_TREE_049972H;
+13857  if ((ROLE='PRIMARY') AND(STAT in ("INTERVAL", "ORDINAL", "NOMINAL")));
+13858  run;
+
+NOTE: There were 481 observations read from the data set WORK.OUTRULES_TREE_049972H.
+NOTE: The data set WORK.TEMPOUTRULES has 13 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+13859  proc sort data=tempoutrules;
+13860  by node numeric_value;
+13861  run;
+
+NOTE: There were 13 observations read from the data set WORK.TEMPOUTRULES.
+NOTE: The data set WORK.TEMPOUTRULES has 13 observations and 6 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+13862  data tempabove;
+13863  set tempoutrules(rename=(node=parent));
+13864  by parent numeric_value;
+13865  retain abovetext tempstring flag branch origval origchar;
+13866  *length abovetext tempstring origchar $45;
+13867  length abovetext $256;
+13868  length tempstring origchar $64;
+13869  if STAT in ("INTERVAL", "ORDINAL") then do;
+13870  if first.parent then do;
+13871  if missing(character_value) then do;
+13872  numeric_value = round(numeric_value, 0.0001);
+13873  abovetext = "< "||strip(NUMERIC_VALUE);
+13874  branch = 1;
+13875  origval = numeric_value;
+13876  output;
+13877  end;
+13878  else do;
+13879  abovetext = "< "||strip(CHARACTER_VALUE);
+13880  branch = 1;
+13881  origchar = character_value;
+13882  output;
+13883  end;
+13884  if first.parent AND last.parent then do;
+13885  if missing(character_value) then do;
+13886  numeric_value = round(numeric_value, 0.0001);
+13887  branch = branch + 1;
+13888  abovetext = ">= "||strip(NUMERIC_VALUE);
+13889  output;
+13890  end;
+13891  else do;
+13892  branch = branch + 1;
+13893  abovetext = ">= "||strip(CHARACTER_VALUE);
+13894  output;
+13895  end;
+13896  end;
+13897  end;
+13898  else if last.parent then do;
+13899  if ( missing(character_value) AND (origval ne numeric_value)) or ( ^missing(character_value) AND (origchar ne character_value)) then do;
+13900  if missing(character_value) then do;
+13901  numeric_value = round(numeric_value, 0.0001);
+13902  abovetext= "[ "||strip(origval)||", "|| strip(numeric_value)||" )";
+13903  end;
+13904  else do;
+13905  abovetext= ">= "||strip(origchar)||" AND < "|| strip(character_value);
+13906  end;
+13907  branch = branch + 1;
+13908  output;
+13909  if missing(character_value) then do;
+13910  numeric_value = round(numeric_value, 0.0001);
+13911  abovetext = ">= "||strip(NUMERIC_VALUE);
+13912  end;
+13913  else do;
+13914  abovetext = ">= "||strip(CHARACTER_VALUE);
+13915  end;
+13916  branch = branch + 1;
+13917  output;
+13918  end;
+13919  else do;
+13920  if missing(character_value) then do;
+13921  numeric_value = round(numeric_value, 0.0001);
+13922  abovetext = ">= "||strip(NUMERIC_VALUE);
+13923  end;
+13924  else do;
+13925  abovetext = ">= "||strip(CHARACTER_VALUE);
+13926  end;
+13927  branch = branch + 1;
+13928  output;
+13929  end;
+13930  end;
+13931  else do;
+13932  if ( missing(character_value) AND (origval ne numeric_value)) or ( ^missing(character_value) AND (origchar ne character_value)) then do;
+13933  if missing(character_value) then do;
+13934  numeric_value = round(numeric_value,0.0001);
+13935  abovetext= "[ "||strip(origval)||", "|| strip(numeric_value)||" )";
+13936  origval = numeric_value;
+13937  end;
+13938  else do;
+13939  abovetext= ">= "||strip(origchar)||" AND < "|| strip(character_value);
+13940  origchar = character_value;
+13941  end;
+13942  branch = branch + 1;
+13943  output;
+13944  end;
+13945  else do;
+13946  if missing(character_value) then do;
+13947  numeric_value = round(numeric_value, 0.0001);
+13948  abovetext = ">= "||strip(NUMERIC_VALUE);
+13949  origval = numeric_value;
+13950  end;
+13951  else do;
+13952  abovetext = ">= "||strip(CHARACTER_VALUE);
+13953  origval = character_value;
+13954  end;
+13955  branch = branch + 1;
+13956  output;
+13957  end;
+13958  end;
+13959  end;
+13960  else do;
+13961  if first.numeric_value then do;
+13962  flag = 0;
+13963  abovetext = CHARACTER_VALUE;
+13964  branch = numeric_value;
+13965  if first.numeric_value AND last.numeric_value then do;
+13966  output;
+13967  end;
+13968  end;
+13969  else if last.numeric_value then do;
+13970  if flag=0 then do;
+13971  tempstring = strip(abovetext)||", "||CHARACTER_VALUE;
+13972  length = length(strip(tempstring));
+13973  if length < 32 then do;
+13974  abovetext = strip(tempstring);
+13975  end;
+13976  else do;
+13977  abovetext = strip(abovetext)||", ...";
+13978  flag = 1;
+13979  end;
+13980  end;
+13981  branch = numeric_value;
+13982  output;
+13983  end;
+13984  else do;
+13985  if flag=0 then do;
+13986  tempstring = strip(abovetext)||", "||CHARACTER_VALUE;
+13987  length = length(strip(tempstring));
+13988  if length < 32 then do;
+13989  abovetext = strip(tempstring);
+13990  end;
+13991  else do;
+13992  abovetext = strip(abovetext)||", ...";
+13993  flag=1;
+13994  end;
+13995  end;
+13996  branch = numeric_value;
+13997  end;
+13998  end;
+13999  keep parent branch abovetext;
+14000  run;
+
+NOTE: Numeric values have been converted to character values at the places given by: (Line):(Column).
+      13873:25   13888:26   13902:24   13902:47   13911:26   13922:26   13935:24   13935:47   13948:26   
+NOTE: Character values have been converted to numeric values at the places given by: (Line):(Column).
+      13953:11   
+NOTE: There were 13 observations read from the data set WORK.TEMPOUTRULES.
+NOTE: The data set WORK.TEMPABOVE has 20 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+14001  /* MIssing value to abovetext */
+14002  data tempmissing;
+14003  set WORK.OUTRULES_TREE_049972H;
+14004  if ((ROLE="PRIMARY") AND (STAT in ("MISSING")));
+14005  rename node=parent numeric_value=branch character_value=misschar;
+14006  run;
+
+NOTE: There were 481 observations read from the data set WORK.OUTRULES_TREE_049972H.
+NOTE: The data set WORK.TEMPMISSING has 10 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+14007  proc sort data=work.tempabove;
+14008  by parent branch;
+14009  run;
+
+NOTE: There were 20 observations read from the data set WORK.TEMPABOVE.
+NOTE: The data set WORK.TEMPABOVE has 20 observations and 3 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+14010  proc sort data=EMWS1.Clus_OUTNODES out=tempoutnodes;
+14011  by parent branch;
+14012  run;
+
+NOTE: There were 21 observations read from the data set EMWS1.CLUS_OUTNODES.
+NOTE: The data set WORK.TEMPOUTNODES has 21 observations and 20 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+14013  proc sort data=tempmissing;
+14014  by parent branch;
+14015  run;
+
+NOTE: There were 10 observations read from the data set WORK.TEMPMISSING.
+NOTE: The data set WORK.TEMPMISSING has 10 observations and 6 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+14016  data WORK.Clus_outnodes;
+14017  merge work.tempabove tempoutNodes(drop=abovetext ) tempmissing(in=_a);
+14018  by parent branch;
+14019  length traintotal validtotal 8;
+14020  retain traintotal validtotal;
+14021  if _a then do;
+14022  if ^MISSING(abovetext) then do;
+14023  abovetext= strip(abovetext)||" %sysfunc(sasmsg(sashelp.dmine, tree_ormiss_vlabel, noquote))";
+14024  end;
+14025  else do;
+14026  abovetext = " %sysfunc(sasmsg(sashelp.dmine, tree_missonly_vlabel, noquote))";
+14027  end;
+14028  end;
+14029  if MISSING(abovetext) then abovetext="%sysfunc(sasmsg(sashelp.dmine, tree_nonmiss_vlabel, noquote))";
+14030  if node=1 then do;
+14031  traintotal = N;
+14032  validtotal=VN;
+14033  end;
+14034  label traintotal = "%sysfunc(sasmsg(sashelp.dmine,  rpt_traintotal_vlabel, noquote))";
+14035  drop role rank stat misschar belowtext;
+14036  run;
+
+NOTE: Variable VN is uninitialized.
+NOTE: There were 20 observations read from the data set WORK.TEMPABOVE.
+NOTE: There were 21 observations read from the data set WORK.TEMPOUTNODES.
+NOTE: There were 10 observations read from the data set WORK.TEMPMISSING.
+NOTE: The data set WORK.CLUS_OUTNODES has 21 observations and 22 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+14037  proc sort data=WORK.Clus_outnodes;
+14038  by node;
+14039  run;
+
+NOTE: There were 21 observations read from the data set WORK.CLUS_OUTNODES.
+NOTE: The data set WORK.CLUS_OUTNODES has 21 observations and 22 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+14040  proc sort data=tempbelow;
+14041  by node;
+14042  run;
+
+NOTE: Input data set is already sorted, no sorting done.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+14043  data WORK.Clus_outnodes;
+14044  merge WORK.Clus_outnodes tempbelow;
+14045  by node;
+14046  run;
+
+NOTE: There were 21 observations read from the data set WORK.CLUS_OUTNODES.
+NOTE: There were 10 observations read from the data set WORK.TEMPBELOW.
+NOTE: The data set WORK.CLUS_OUTNODES has 21 observations and 23 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+NOTE: Variable _WARN_ is uninitialized.
+NOTE: There were 2438 observations read from the data set EMWS1.PART_TRAIN.
+NOTE: There were 2438 observations read from the data set EMWS1.IMPT_TRAIN.
+NOTE: View EMWS1.EM_CLUS.VIEW used (Total process time):
+      real time           0.33 seconds
+      cpu time            0.23 seconds
+      
+NOTE: There were 2438 observations read from the data set EMWS1.CLUS_TRAIN.
+14047  data tempoutstats;
+14048  set WORK.OUTSTATS_TREE_049972H;
+14049  length tarlevel $8;
+14050  tarlevel ="NOMINAL";
+14051  run;
+
+NOTE: There were 84 observations read from the data set WORK.OUTSTATS_TREE_049972H.
+NOTE: The data set WORK.TEMPOUTSTATS has 84 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+14052  data EMWS1.Clus_TREE_PLOT;
+14053  length NODETEXT TEXTALL $800 N VN NODECOLOR 8;
+14054  set WORK.Clus_outnodes;
+14055  label parent = "%sysfunc(sasmsg(sashelp.dmine, rpt_parentID_vlabel, noquote))" depth = "%sysfunc(sasmsg(sashelp.dmine, rpt_depth_vlabel, noquote))" belowtext= "%sysfunc(sasmsg(sashelp.dmine, rpt_belowtext_vlabel, noquote))" abovetext =
+14056     "%sysfunc(sasmsg(sashelp.dmine, rpt_abovetext_vlabel, noquote))" linkwidth = "%sysfunc(sasmsg(sashelp.dmine, rpt_linkwidth_vlabel, noquote))" nodetext = "%sysfunc(sasmsg(sashelp.dmine, rpt_nodetext_vlabel, noquote))" textall =
+14057     "%sysfunc(sasmsg(sashelp.dmine, rpt_textall_vlabel, noquote))" N = "%sysfunc(sasmsg(sashelp.dmine, rpt_trainn_vlabel, noquote))" VN = "%sysfunc(sasmsg(sashelp.dmine, rpt_validn_vlabel, noquote))" nodecolor =
+14058     "%sysfunc(sasmsg(sashelp.dmine, rpt_nodecolor_vlabel, noquote))";
+14059  keep NODE PARENT DEPTH BELOWTEXT ABOVETEXT LINKWIDTH NODETEXT TEXTALL N VN NODECOLOR;
+14060  run;
+
+NOTE: Variable TEXTALL is uninitialized.
+NOTE: Variable NODECOLOR is uninitialized.
+NOTE: There were 21 observations read from the data set WORK.CLUS_OUTNODES.
+NOTE: The data set EMWS1.CLUS_TREE_PLOT has 21 observations and 11 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+14061  proc sort data=EMWS1.Clus_TREE_PLOT;
+14062  by node;
+14063  run;
+
+NOTE: There were 21 observations read from the data set EMWS1.CLUS_TREE_PLOT.
+NOTE: The data set EMWS1.CLUS_TREE_PLOT has 21 observations and 11 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+14064  data tempcolor;
+14065  set WORK.OUTSTATS_TREE_049972H;
+14066  retain eventlevel;
+14067  if STATNAME='PREDICTION' then eventlevel=CATEGORY;
+14068  run;
+
+NOTE: There were 84 observations read from the data set WORK.OUTSTATS_TREE_049972H.
+NOTE: The data set WORK.TEMPCOLOR has 84 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+14069  data tempcolor;
+14070  set tempcolor;
+14071  if 'NOMINAL' ne 'INTERVAL' then do;
+14072  if CATEGORY=EVENTLEVEL AND STATNAME="PROBABILITY";
+14073  end;
+14074  else do;
+14075  if STATNAME="PREDICTION";
+14076  end;
+14077  run;
+
+NOTE: There were 84 observations read from the data set WORK.TEMPCOLOR.
+NOTE: The data set WORK.TEMPCOLOR has 21 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+14078  data tempcolor;
+14079  set tempcolor;
+14080  length nodecolor 8;
+14081  if 'NOMINAL' ne 'INTERVAL' then do;
+14082  nodecolor = round(100*(STATVALUE), .01);
+14083  end;
+14084  else do;
+14085  nodecolor=round(statvalue, .01);
+14086  end;
+14087  keep node nodecolor;
+14088  run;
+
+NOTE: There were 21 observations read from the data set WORK.TEMPCOLOR.
+NOTE: The data set WORK.TEMPCOLOR has 21 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+14089  proc sort data=tempoutstats;
+14090  by node statname;
+14091  run;
+
+NOTE: There were 84 observations read from the data set WORK.TEMPOUTSTATS.
+NOTE: The data set WORK.TEMPOUTSTATS has 84 observations and 6 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+14092  proc sort data=tempcolor;
+14093  by node;
+14094  run;
+
+NOTE: There were 21 observations read from the data set WORK.TEMPCOLOR.
+NOTE: The data set WORK.TEMPCOLOR has 21 observations and 2 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+14095  data EMWS1.Clus_TREE_PLOT;
+14096  merge EMWS1.Clus_TREE_PLOT tempoutstats tempcolor;
+14097  length text $800 _RASE_ _VRASE_ 8;
+14098  retain _RASE_ _VRASE_ VN eventlevel;
+14099  by node;
+14100  if STATNAME = 'N' then N=STATVALUE;
+14101  else if STATNAME = 'VALID: N' then VN=STATVALUE;
+14102  if STATNAME='NPRIORS' then N=statvalue;
+14103  else if STATNAME = 'VALID: NPRIORS' then VN=STATVALUE;
+14104  if STATNAME = 'RASE' then _RASE_ = STATVALUE;
+14105  else if STATNAME = 'VALID: RASE' then _VRASE_ = STATVALUE;
+14106  else if STATNAME = 'PREDICTION' then eventlevel=CATEGORY;
+14107  if last.node then output EMWS1.Clus_TREE_PLOT;
+14108  if STATNAME ="N" or STATNAME="VALID: N" or STATNAME="TARGET" or STATNAME="RASE" or STATNAME="VALID: RASE" then delete;
+14109  if STATNAME ="ALTERNATIVE PROFIT" or STATNAME="VALID: ALTERNATIVE PROFIT" then delete;
+14110  if STATNAME ="ALTERNATIVE LOSS" or STATNAME="VALID: ALTERNATIVE LOSS" then delete;
+14111  if STATNAME ="NPRIORS" or STATNAME="VALID: NPRIORS" then delete;
+14112  if tarlevel ^='INTERVAL' then do;
+14113  if STATNAME = "PREDICTION" then delete;
+14114  if STATNAME = "PROPORTION" or STATNAME="VALID: PROPORTION" then delete;
+14115  end;
+14116  label _RASE_ = "%sysfunc(sasmsg(sashelp.dmine, rpt_trase_vlabel, noquote))" _VRASE_ = "%sysfunc(sasmsg(sashelp.dmine, rpt_vrase_vlabel, noquote))";
+14117  drop STATNAME STATVALUE;
+14118  run;
+
+NOTE: Variable text is uninitialized.
+NOTE: There were 21 observations read from the data set EMWS1.CLUS_TREE_PLOT.
+NOTE: There were 84 observations read from the data set WORK.TEMPOUTSTATS.
+NOTE: There were 21 observations read from the data set WORK.TEMPCOLOR.
+NOTE: The data set EMWS1.CLUS_TREE_PLOT has 21 observations and 18 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.03 seconds
+      
+
+14119  data tree_temp;
+14120  set tempoutstats;
+14121  if STATNAME^="N" AND STATNAME ^="VALID: N" AND STATNAME^="RASE" AND STATNAME ^="VALID: RASE" AND STATNAME ^="TARGET";
+14122  if STATNAME ="ALTERNATIVE PROFIT" or STATNAME="VALID: ALTERNATIVE PROFIT" then delete;
+14123  if STATNAME ="ALTERNATIVE LOSS" or STATNAME="VALID: ALTERNATIVE LOSS" then delete;
+14124  if STATNAME ="NPRIORS" or STATNAME="VALID: NPRIORS" then delete;
+14125  if TARLEVEL ^="INTERVAL" then do;
+14126  if STATNAME="PREDICTION" then delete;
+14127  if STATNAME = "PROPORTION" or STATNAME="VALID: PROPORTION" then delete;
+14128  end;
+14129  if NODE = . then delete;
+14130  run;
+
+NOTE: There were 84 observations read from the data set WORK.TEMPOUTSTATS.
+NOTE: The data set WORK.TREE_TEMP has 42 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+14131  proc sort data=tree_temp;
+14132  by node category;
+14133  run;
+
+NOTE: There were 42 observations read from the data set WORK.TREE_TEMP.
+NOTE: The data set WORK.TREE_TEMP has 42 observations and 6 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+14134  data tree_temp;
+14135  merge EMWS1.Clus_TREE_PLOT tree_temp;
+14136  by node;
+14137  run;
+
+NOTE: There were 21 observations read from the data set EMWS1.CLUS_TREE_PLOT.
+NOTE: There were 42 observations read from the data set WORK.TREE_TEMP.
+NOTE: The data set WORK.TREE_TEMP has 42 observations and 20 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+14138  data EMWS1.Clus_TREE_PLOT;
+14139  merge EMWS1.Clus_TREE_PLOT tree_temp;
+14140  length text textall nodetext stext ntext $800 P__SEGMENT_1 V__SEGMENT_1 8;
+14141  retain P__SEGMENT_1 V__SEGMENT_1 ntext stext textall;
+14142  by node category;
+14143  _RASE_ = .;
+14144  _VRASE_ = .;
+14145  if tarlevel ^= 'INTERVAL' then do;
+14146  if CATEGORY=EVENTLEVEL AND STATNAME = "PROBABILITY" then do;
+14147  P__SEGMENT_1 = round(STATVALUE, .01);
+14148  end;
+14149  else if CATEGORY=EVENTLEVEL AND STATNAME = "VALID: PROBABILITY" then do;
+14150  V__SEGMENT_1 = round(STATVALUE, .01);
+14151  end;
+14152  if CATEGORY=EVENTLEVEL then do;
+14153  * P__SEGMENT_1 = round(STATVALUE, .01);
+14154  if first.category then do;
+14155  ntext = put(strip(CATEGORY)||':', $12.)|| right(put(STATVALUE, percent13.1));
+14156  end;
+14157  else do;
+14158  ntext=trim(ntext)||right(put(STATVALUE, percent15.1));
+14159  end;
+14160  end;
+14161  if first.node then do;
+14162  stext = put(strip(CATEGORY)||':', $12.)|| right(put(STATVALUE, percent13.1));
+14163  end;
+14164  else do;
+14165  if first.category then do;
+14166  stext=trim(stext)||'0A'x||put(strip(CATEGORY)||':', $12.)||right(put(STATVALUE, percent13.1));
+14167  end;
+14168  else do;
+14169  stext=trim(stext)||right(put(STATVALUE, percent15.1));
+14170  end;
+14171  end;
+14172  if last.node then do;
+14173  nodetext = trim(nodetext)||'0A'x||put("%sysfunc(sasmsg(sashelp.dmine, rpt_rptcount_vlabel, noquote )):", $12.)|| put(N, 13.);
+14174  textall = trim(textall)||'0A'x||put("%sysfunc(sasmsg(sashelp.dmine, rpt_rptcount_vlabel, noquote )):", $12.)|| put(N, 13.);
+14175  textall = put("%sysfunc(sasmsg(sashelp.dmine, rpt_dmneural_label_stat, noquote))", $12.)||right(put("%sysfunc(sasmsg(sashelp.dmine, rpt_train_vlabel, noquote))", $13.))||right(put("%sysfunc(sasmsg(sashelp.dmine, rpt_validate_vlabel
+14176  , noquote))", $15.));
+14177  textall = trim(textall)||'0A'x||trim(stext);
+14178  textall = trim(textall)||'0A'x||put("%sysfunc(sasmsg(sashelp.dmine, rpt_rptcount_vlabel, noquote )):", $12.)|| put(N, 13.)|| put(VN, 15.);
+14179  nodetext= put("%sysfunc(sasmsg(sashelp.dmine, rpt_dmneural_label_stat, noquote))", $12.)||right(put("%sysfunc(sasmsg(sashelp.dmine, rpt_train_vlabel, noquote))" , $13.))||right(put("%sysfunc(sasmsg(sashelp.dmine, rpt_validate_vlabel
+14180   , noquote))" , $15.));
+14181  nodetext= trim(nodetext)||'0A'x||trim(ntext);
+14182  nodetext= trim(nodetext)||'0A'x||put("%sysfunc(sasmsg(sashelp.dmine, rpt_rptcount_vlabel, noquote )):", $12.)|| put(N, 13.)|| put(VN, 15.);
+14183  output EMWS1.Clus_TREE_PLOT;
+14184  end;
+14185  end;
+14186  else do;
+14187  if first.node then do;
+14188  vprobflag = 0;
+14189  if STATNAME = "PREDICTION" then do;
+14190  P__SEGMENT_1 = STATVALUE;
+14191  end;
+14192  else if STATNAME="VALID: PREDICTION" then do;
+14193  V__SEGMENT_1 = STATVALUE;
+14194  end;
+14195  stext = put("%sysfunc(sasmsg(sashelp.dmine, rpt_average_vlabel, noquote))", $12.)|| right(put(STATVALUE, 13.4));
+14196  end;
+14197  else do;
+14198  vprobflag = 0;
+14199  if STATNAME = "PREDICTION" then do;
+14200  P__SEGMENT_1 = STATVALUE;
+14201  end;
+14202  else if STATNAME="VALID: PREDICTION" then do;
+14203  V__SEGMENT_1 = STATVALUE;
+14204  end;
+14205  stext=trim(stext)||right(put(STATVALUE, 13.4));
+14206  vprobflag=1;
+14207  end;
+14208  if last.node then do;
+14209  nodetext = put("%sysfunc(sasmsg(sashelp.dmine, rpt_dmneural_label_stat, noquote))", $12.)||right(put("%sysfunc(sasmsg(sashelp.dmine, rpt_train_vlabel, noquote))", $8.))||right(put("%sysfunc(sasmsg(sashelp.dmine, rpt_validate_vlabel
+14210  , noquote))", $15.));
+14211  if vprobflag eq 0 then do;
+14212  stext=trim(stext)||right(put(0, 13.4));
+14213  end;
+14214  nodetext = trim(nodetext)||'0A'x||trim(stext);
+14215  nodetext = trim(nodetext)||'0A'x||put("%sysfunc(sasmsg(sashelp.dmine, rpt_rptcount_vlabel, noquote )):", $12.)|| put(N, 8.)|| put(VN, 15.);
+14216  textall = nodetext;
+14217  output EMWS1.Clus_TREE_PLOT;
+14218  end;
+14219  end;
+14220  label _RASE_ = "%sysfunc(sasmsg(sashelp.dmine, rpt_trase_vlabel, noquote))" _VRASE_ = "%sysfunc(sasmsg(sashelp.dmine, rpt_vrase_vlabel, noquote))";
+14221  label P__SEGMENT_1 = "%sysfunc(sasmsg(sashelp.dmine, rpt_predictedvar_vlabel, noquote))";
+14222  keep NODE PARENT DEPTH BELOWTEXT ABOVETEXT LINKWIDTH NODETEXT TEXTALL N VN NODECOLOR _RASE_ _VRASE_ P__SEGMENT_1 V__SEGMENT_1;
+14223  run;
+
+NOTE: There were 21 observations read from the data set EMWS1.CLUS_TREE_PLOT.
+NOTE: There were 42 observations read from the data set WORK.TREE_TEMP.
+NOTE: The data set EMWS1.CLUS_TREE_PLOT has 21 observations and 15 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.03 seconds
+      
+
+14224  data EMWS1.Clus_TREE_PLOT;
+14225  set EMWS1.Clus_TREE_PLOT;
+14226  if NODE eq . then delete;
+14227  run;
+
+NOTE: There were 21 observations read from the data set EMWS1.CLUS_TREE_PLOT.
+NOTE: The data set EMWS1.CLUS_TREE_PLOT has 21 observations and 15 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+14228  data EMWS1.Clus_TREE_PLOT;
+14229  set EMWS1.Clus_TREE_PLOT;
+14230  textall = "%sysfunc(sasmsg(sashelp.dmine, rpt_nodeId_vlabel, noquote, )):"|| put(Node, 13.)||'0A'x||trim(textall);
+14231  run;
+
+NOTE: There were 21 observations read from the data set EMWS1.CLUS_TREE_PLOT.
+NOTE: The data set EMWS1.CLUS_TREE_PLOT has 21 observations and 15 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.01 seconds
+      
+
+14232  data tempout;
+14233  set WORK.Clus_outnodes;
+14234  run;
+
+NOTE: There were 21 observations read from the data set WORK.CLUS_OUTNODES.
+NOTE: The data set WORK.TEMPOUT has 21 observations and 23 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+14235  proc sort data=tempout;
+14236  by descending P__SEGMENT_1;
+14237  run;
+
+NOTE: There were 21 observations read from the data set WORK.TEMPOUT.
+NOTE: The data set WORK.TEMPOUT has 21 observations and 23 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+14238  data tree_temp;
+14239  set tempout;
+14240  if LEAF ne .;
+14241  label index="%sysfunc(sasmsg(sashelp.dmine, rpt_leafindex_vlabel  , NOQUOTE))";
+14242  label percevent_train = "%sysfunc(sasmsg(sashelp.dmine, rpt_perc_train_vlabel  , NOQUOTE))";
+14243  label perc_train = "%sysfunc(sasmsg(sashelp.dmine, rpt_percevent_train_vlabel  , NOQUOTE))";
+14244  label tprob="%sysfunc(sasmsg(sashelp.dmine, rpt_prob_vlabel  , NOQUOTE, %nrbquote()))";
+14245  label vprob = "%sysfunc(sasmsg(sashelp.dmine, rpt_vprob_vlabel  , NOQUOTE, %nrbquote()))";
+14246  label percevent_valid = "%sysfunc(sasmsg(sashelp.dmine, rpt_perc_valid_vlabel  , NOQUOTE))";
+14247  label perc_valid = "%sysfunc(sasmsg(sashelp.dmine, rpt_percevent_valid_vlabel  , NOQUOTE))";
+14248  vprob = round(V__SEGMENT_1, .01);
+14249  percevent_valid = round ( vprob*100, .01);
+14250  * perc_valid =round( ( VN / validtotal)*100, .001);
+14251  perc_valid =round( ( VN / validtotal), .01);
+14252  tprob = round(P__SEGMENT_1, .01);
+14253  percevent_train = round ( tprob*100, .01);
+14254  *perc_train =round( ( N / traintotal)*100, .001);
+14255  perc_train =round( ( N / traintotal), .01);
+14256  if missing(perc_train) then perc_train = round( linkwidth*100, .001);
+14257  index = _n_;
+14258  keep NODE index tprob perc_train percevent_train
+14259  vprob perc_valid percevent_valid
+14260  ;
+14261  run;
+
+NOTE: Variable V__SEGMENT_1 is uninitialized.
+NOTE: Missing values were generated as a result of performing an operation on missing values.
+      Each place is given by: (Number of times) at (Line):(Column).
+      11 at 14248:9    11 at 14249:19   11 at 14249:32   11 at 14251:13   11 at 14251:25   
+NOTE: There were 21 observations read from the data set WORK.TEMPOUT.
+NOTE: The data set WORK.TREE_TEMP has 11 observations and 8 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.01 seconds
+      
+
+14262  proc sort data=tree_temp;
+14263  by NODE;
+14264  run;
+
+NOTE: There were 11 observations read from the data set WORK.TREE_TEMP.
+NOTE: The data set WORK.TREE_TEMP has 11 observations and 8 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+14265  proc sort data=EMWS1.Clus_TREE_PLOT;
+14266  by NODE;
+14267  run;
+
+NOTE: There were 21 observations read from the data set EMWS1.CLUS_TREE_PLOT.
+NOTE: The data set EMWS1.CLUS_TREE_PLOT has 21 observations and 15 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+14268  data EMWS1.Clus_TREE_PLOT;
+14269  merge EMWS1.Clus_TREE_PLOT tree_temp;
+14270  by NODE;
+14271  run;
+
+NOTE: There were 21 observations read from the data set EMWS1.CLUS_TREE_PLOT.
+NOTE: There were 11 observations read from the data set WORK.TREE_TEMP.
+NOTE: The data set EMWS1.CLUS_TREE_PLOT has 21 observations and 22 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+14272  proc sort data=EMWS1.Clus_TREE_PLOT;
+14273  by node index;
+14274  run;
+
+NOTE: There were 21 observations read from the data set EMWS1.CLUS_TREE_PLOT.
+NOTE: The data set EMWS1.CLUS_TREE_PLOT has 21 observations and 22 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+14275  title9 ' ';
+14276  title10 "%sysfunc(sasmsg(sashelp.dmine, rpt_VariableImportance_title, NOQUOTE))";
+14277  proc print data=EMWS1.Clus_OUTIMPORT(where=(IMPORTANCE>0)) noobs label;
+14278  run;
+
+NOTE: There were 15 observations read from the data set EMWS1.CLUS_OUTIMPORT.
+      WHERE IMPORTANCE>0;
+NOTE: The PROCEDURE PRINT printed page 2.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+14279  title10;
+
+14280  data WORK.M08KH5EC;
+14281  set WORK.M08KH5EC;
+14282  if role eq 'REJECTED' then role = 'INPUT';
+14283  run;
+
+NOTE: There were 44 observations read from the data set WORK.M08KH5EC.
+NOTE: The data set WORK.M08KH5EC has 44 observations and 21 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+14284  proc sort data=EMWS1.Clus_OUTIMPORT out=WORK.Clus_GRAPHVARS(keep=NAME);
+14285  where IMPORTANCE>0;
+14286  by NAME;
+14287  run;
+
+NOTE: There were 15 observations read from the data set EMWS1.CLUS_OUTIMPORT.
+      WHERE IMPORTANCE>0;
+NOTE: The data set WORK.CLUS_GRAPHVARS has 15 observations and 1 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+14288  proc sort data = WORK.M08KH5EC;
+14289  by NAME;
+14290  run;
+
+NOTE: There were 44 observations read from the data set WORK.M08KH5EC.
+NOTE: The data set WORK.M08KH5EC has 44 observations and 21 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+14291  data WORK.M08KH5EC;
+14292  merge WORK.M08KH5EC WORK.Clus_GRAPHVARS(in=_b_);
+14293  by NAME;
+14294  if _b_ or ROLE = "FREQ" or REPORT="Y" then output;
+14295  run;
+
+NOTE: There were 44 observations read from the data set WORK.M08KH5EC.
+NOTE: There were 15 observations read from the data set WORK.CLUS_GRAPHVARS.
+NOTE: The data set WORK.M08KH5EC has 15 observations and 21 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+14296  data WORK.M08KH5EC;
+14297  set WORK.M08KH5EC end=_eof_ nobs=_nobs_;
+14298  output;
+14299  if _eof_ then do;
+14300  name = '_SEGMENT_';
+14301  ROLE = 'BY';
+14302  LEVEL = 'NOMINAL';
+14303  LABEL = 'Segment Variable';
+14304  TYPE = 'N';
+14305  FORMAT = '';
+14306  INFORMAT = '';
+14307  output;
+14308  end;
+14309  run;
+
+NOTE: There were 15 observations read from the data set WORK.M08KH5EC.
+NOTE: The data set WORK.M08KH5EC has 16 observations and 21 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+14310  *------------------------------------------------------------* ;
+14311  * Clus: STDIZE Variables Macro ;
+14312  *------------------------------------------------------------* ;
+14313  %macro stdizevar;
+14314      IMP_domestic_gross IMP_domestic_opening IMP_foreign_gross IMP_runtime
+14315     IMP_ss_count IMP_ss_mean IMP_ss_std IMP_total_gross IMP_user_rating_count
+14316     tomatometer_count
+14317  %mend stdizevar;
+14318  *------------------------------------------------------------*;
+14319  * Clus: Computing Summary Statistics;
+14320  *------------------------------------------------------------*;
+14321  proc stdize
+14322  data = EMWS1.Clus_TRAIN
+14323  out=_null_
+14324  outstat=WORK.Clus_STAT
+14325  add=0 fuzz=1E-14 initial=MAD
+14326  vardef=df
+14327  method=STD
+14328  mult=1
+14329  pctlmtd=ORD_STAT pctldef=2
+14330  pctlpts=(
+14331  0
+14332  100
+14333  )
+14334  ;
+14335  var %stdizevar;
+14336  run;
+
+NOTE: INITIAL= will be ignored.
+NOTE: Variable _WARN_ is uninitialized.
+NOTE: There were 2438 observations read from the data set EMWS1.PART_TRAIN.
+NOTE: View EMWS1.CLUS_TRAIN.VIEW used (Total process time):
+      real time           0.17 seconds
+      cpu time            0.15 seconds
+      
+NOTE: There were 2438 observations read from the data set EMWS1.IMPT_TRAIN.
+NOTE: There were 2438 observations read from the data set EMWS1.CLUS_TRAIN.
+NOTE: The data set WORK.CLUS_STAT has 10 observations and 11 variables.
+NOTE: PROCEDURE STDIZE used (Total process time):
+      real time           0.19 seconds
+      cpu time            0.17 seconds
+      
+
+14337  quit;
+
+14338  data WORK.Clus_MINMAX;
+14339  set WORK.Clus_STAT;
+14340  where _TYPE_ in('P0','P100');
+14341  if _TYPE_='P0' then _TYPE_='MIN';
+14342  else if _TYPE_='P100' then _TYPE_='MAX';
+14343  run;
+
+NOTE: There were 2 observations read from the data set WORK.CLUS_STAT.
+      WHERE _TYPE_ in ('P0', 'P100');
+NOTE: The data set WORK.CLUS_MINMAX has 2 observations and 11 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+14344  proc transpose data=WORK.Clus_MINMAX out=WORK.Clus_MINMAX(drop=_LABEL_ rename=(_NAME_=_VARIABLE_));
+14345  id _TYPE_;
+14346  run;
+
+NOTE: There were 2 observations read from the data set WORK.CLUS_MINMAX.
+NOTE: The data set WORK.CLUS_MINMAX has 10 observations and 3 variables.
+NOTE: PROCEDURE TRANSPOSE used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.01 seconds
+      
+
+14347  data WORK.Clus_UGRID;
+14348  set WORK.Clus_MINMAX;
+14349  B1 = MIN + (1-1)*(MAX-MIN)/8;
+14350  B2 = MIN + (2-1)*(MAX-MIN)/8;
+14351  B3 = MIN + (3-1)*(MAX-MIN)/8;
+14352  B4 = MIN + (4-1)*(MAX-MIN)/8;
+14353  B5 = MIN + (5-1)*(MAX-MIN)/8;
+14354  B6 = MIN + (6-1)*(MAX-MIN)/8;
+14355  B7 = MIN + (7-1)*(MAX-MIN)/8;
+14356  B8 = MIN + (8-1)*(MAX-MIN)/8;
+14357  B9 = MIN + (9-1)*(MAX-MIN)/8;
+14358  drop MIN MAX;
+14359  run;
+
+NOTE: There were 10 observations read from the data set WORK.CLUS_MINMAX.
+NOTE: The data set WORK.CLUS_UGRID has 10 observations and 10 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+14360  *------------------------------------------------------------*;
+14361  * Clus: Creating formats for binning interval variables;
+14362  *------------------------------------------------------------*;
+14363  proc format;
+14364  value F1_
+14365  0-117082778.125 = "0:1.17E8"
+14366  117082778.125-234165556.25 = "1.17E8:2.34E8"
+14367  234165556.25-351248334.375 = "2.34E8:3.51E8"
+14368  351248334.375-468331112.5 = "3.51E8:4.68E8"
+14369  468331112.5-585413890.625 = "4.68E8:5.85E8"
+14370  585413890.625-702496668.75 = "5.85E8:7.02E8"
+14371  702496668.75-819579446.875 = "7.02E8:8.2E8"
+14372  819579446.875-936662225 = "8.2E8:9.37E8"
+14373  ;
+NOTE: Format F1_ has been output.
+14374  value F2_
+14375  0-30995834.375 = "0:3.1E7"
+14376  30995834.375-61991668.75 = "3.1E7:6.2E7"
+14377  61991668.75-92987503.125 = "6.2E7:9.3E7"
+14378  92987503.125-123983337.5 = "9.3E7:1.24E8"
+14379  123983337.5-154979171.875 = "1.24E8:1.55E8"
+14380  154979171.875-185975006.25 = "1.55E8:1.86E8"
+14381  185975006.25-216970840.625 = "1.86E8:2.17E8"
+14382  216970840.625-247966675 = "2.17E8:2.48E8"
+14383  ;
+NOTE: Format F2_ has been output.
+14384  value F3_
+14385  0-141445174.875 = "0:1.41E8"
+14386  141445174.875-282890349.75 = "1.41E8:2.83E8"
+14387  282890349.75-424335524.625 = "2.83E8:4.24E8"
+14388  424335524.625-565780699.5 = "4.24E8:5.66E8"
+14389  565780699.5-707225874.375 = "5.66E8:7.07E8"
+14390  707225874.375-848671049.25 = "7.07E8:8.49E8"
+14391  848671049.25-990116224.125 = "8.49E8:9.9E8"
+14392  990116224.125-1131561399 = "9.9E8:1.13E9"
+14393  ;
+NOTE: Format F3_ has been output.
+14394  value F4_
+14395  15-73.125 = "15:73.125"
+14396  73.125-131.25 = "73.125:131.25"
+14397  131.25-189.375 = "131.25:189.38"
+14398  189.375-247.5 = "189.38:247.5"
+14399  247.5-305.625 = "247.5:305.63"
+14400  305.625-363.75 = "305.63:363.75"
+14401  363.75-421.875 = "363.75:421.88"
+14402  421.875-480 = "421.88:480"
+14403  ;
+NOTE: Format F4_ has been output.
+14404  value F5_
+14405  5-66.375 = "5:66.375"
+14406  66.375-127.75 = "66.375:127.75"
+14407  127.75-189.125 = "127.75:189.13"
+14408  189.125-250.5 = "189.13:250.5"
+14409  250.5-311.875 = "250.5:311.88"
+14410  311.875-373.25 = "311.88:373.25"
+14411  373.25-434.625 = "373.25:434.63"
+14412  434.625-496 = "434.63:496"
+14413  ;
+NOTE: Format F5_ has been output.
+14414  value F6_
+14415  0-0.125 = "0:0.125"
+14416  0.125-0.25 = "0.125:0.25"
+14417  0.25-0.375 = "0.25:0.375"
+14418  0.375-0.5 = "0.375:0.5"
+14419  0.5-0.625 = "0.5:0.625"
+14420  0.625-0.75 = "0.625:0.75"
+14421  0.75-0.875 = "0.75:0.875"
+14422  0.875-1 = "0.875:1"
+14423  ;
+NOTE: Format F6_ has been output.
+14424  value F7_
+14425  0-0.06846531968814 = "0:0.0685"
+14426  0.06846531968814-0.13693063937629 = "0.0685:0.1369"
+14427  0.13693063937629-0.20539595906443 = "0.1369:0.2054"
+14428  0.20539595906443-0.27386127875258 = "0.2054:0.2739"
+14429  0.27386127875258-0.34232659844072 = "0.2739:0.3423"
+14430  0.34232659844072-0.41079191812887 = "0.3423:0.4108"
+14431  0.41079191812887-0.47925723781702 = "0.4108:0.4793"
+14432  0.47925723781702-0.54772255750516 = "0.4793:0.5477"
+14433  ;
+NOTE: Format F7_ has been output.
+14434  value F8_
+14435  0-258527953 = "0:2.59E8"
+14436  258527953-517055906 = "2.59E8:5.17E8"
+14437  517055906-775583859 = "5.17E8:7.76E8"
+14438  775583859-1034111812 = "7.76E8:1.03E9"
+14439  1034111812-1292639765 = "1.03E9:1.29E9"
+14440  1292639765-1551167718 = "1.29E9:1.55E9"
+14441  1551167718-1809695671 = "1.55E9:1.81E9"
+14442  1809695671-2068223624 = "1.81E9:2.07E9"
+14443  ;
+NOTE: Format F8_ has been output.
+14444  value F9_
+14445  5-60556.375 = "5:60556"
+14446  60556.375-121107.75 = "60556:121108"
+14447  121107.75-181659.125 = "121108:181659"
+14448  181659.125-242210.5 = "181659:242211"
+14449  242210.5-302761.875 = "242211:302762"
+14450  302761.875-363313.25 = "302762:363313"
+14451  363313.25-423864.625 = "363313:423865"
+14452  423864.625-484416 = "423865:484416"
+14453  ;
+NOTE: Format F9_ has been output.
+14454  value F10_
+14455  5-66.375 = "5:66.375"
+14456  66.375-127.75 = "66.375:127.75"
+14457  127.75-189.125 = "127.75:189.13"
+14458  189.125-250.5 = "189.13:250.5"
+14459  250.5-311.875 = "250.5:311.88"
+14460  311.875-373.25 = "311.88:373.25"
+14461  373.25-434.625 = "373.25:434.63"
+14462  434.625-496 = "434.63:496"
+14463  ;
+NOTE: Format F10_ has been output.
+14464  run;
+
+NOTE: PROCEDURE FORMAT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+14465  ods listing close;
+14466  ods output crosstabfreqs=WORK.TEMPFREQ;
+14467  proc freq data = EMWS1.Clus_TRAIN order=formatted addnames;
+14468  table IMP_domestic_gross * _SEGMENT_ / missing;
+14469  table IMP_domestic_opening * _SEGMENT_ / missing;
+14470  table IMP_foreign_gross * _SEGMENT_ / missing;
+14471  table IMP_runtime * _SEGMENT_ / missing;
+14472  table IMP_ss_count * _SEGMENT_ / missing;
+14473  table IMP_ss_mean * _SEGMENT_ / missing;
+14474  table IMP_ss_std * _SEGMENT_ / missing;
+14475  table IMP_total_gross * _SEGMENT_ / missing;
+14476  table IMP_user_rating_count * _SEGMENT_ / missing;
+14477  table NR * _SEGMENT_ / missing;
+14478  table R * _SEGMENT_ / missing;
+14479  table genre_DramaTele * _SEGMENT_ / missing;
+14480  table genre_Fantasy * _SEGMENT_ / missing;
+14481  table genre_Sci_fi * _SEGMENT_ / missing;
+14482  table tomatometer_count * _SEGMENT_ / missing;
+14483  format IMP_DOMESTIC_GROSS F1_.;
+14484  format IMP_DOMESTIC_OPENING F2_.;
+14485  format IMP_FOREIGN_GROSS F3_.;
+14486  format IMP_RUNTIME F4_.;
+14487  format IMP_SS_COUNT F5_.;
+14488  format IMP_SS_MEAN F6_.;
+14489  format IMP_SS_STD F7_.;
+14490  format IMP_TOTAL_GROSS F8_.;
+14491  format IMP_USER_RATING_COUNT F9_.;
+14492  format TOMATOMETER_COUNT F10_.;
+14493  run;
+
+NOTE: Variable _WARN_ is uninitialized.
+NOTE: There were 2438 observations read from the data set EMWS1.PART_TRAIN.
+NOTE: View EMWS1.CLUS_TRAIN.VIEW used (Total process time):
+      real time           0.27 seconds
+      cpu time            0.15 seconds
+      
+NOTE: There were 2438 observations read from the data set EMWS1.IMPT_TRAIN.
+NOTE: The data set WORK.TEMPFREQ has 294 observations and 26 variables.
+NOTE: There were 2438 observations read from the data set EMWS1.CLUS_TRAIN.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.31 seconds
+      cpu time            0.18 seconds
+      
+
+14494  quit;
+14495  ods listing;
+14496  data EMWS1.Clus_PROFILE(keep=_VARIABLE_ _SEGMENT_ TYPE COUNT PERCENT _X_ _XLABEL_);
+14497  label _VARIABLE_ = "%sysfunc(sasmsg(sashelp.dmine, rpt_variable_vlabel, NOQUOTE))" _SEGMENT_ = "Segment Variable" Type = "%sysfunc(sasmsg(sashelp.dmine, rpt_type_vlabel,         NOQUOTE))" _X_ =
+14498     "%sysfunc(sasmsg(sashelp.dmine, rpt_numValue_vlabel, NOQUOTE))" _XLABEL_ = "%sysfunc(sasmsg(sashelp.dmine, rpt_fmtValue_vlabel ,    NOQUOTE))" COUNT = "%sysfunc(sasmsg(sashelp.dmine, rpt_count_vlabel,        NOQUOTE))" PERCENT =
+14499     "%sysfunc(sasmsg(sashelp.dmine, rpt_percent_vlabel,      NOQUOTE))";
+14500  dsid = open("WORK.TEMPFREQ");
+14501  varnum = varnum(dsid, 'ROWVARIABLE');
+14502  freqnum = varnum(dsid, 'FREQUENCY');
+14503  pvarnum = varnum(dsid, 'PERCENT');
+14504  typenum = varnum(dsid, '_TYPE_');
+14505  bynum = varnum(dsid, "_SEGMENT_");
+14506  length varformat _VARIABLE_ $32 _XLABEL_ $32 TYPE $1;
+14507  do while(^fetch(dsid));
+14508  count = getvarn(dsid, freqnum);
+14509  percent = getvarn(dsid, pvarnum);
+14510  _VARIABLE_ = strip(getvarc(dsid, varnum));
+14511  varblnum = varnum(dsid, _VARIABLE_);
+14512  _SEGMENT_ = getvarn(dsid, bynum);
+14513  type = vartype(dsid, varblnum);
+14514  varformat = varfmt(dsid, varblnum);
+14515  if varformat eq '' then varformat = 'best12.';
+14516  _X_=.;
+14517  if type = 'N' then do;
+14518  _X_ = getvarn(dsid, varblnum);
+14519  _XLABEL_ = left(putn(_X_, varformat));
+14520  end;
+14521  else _XLABEL_ = getvarc(dsid, varblnum);
+14522  if getvarc(dsid, typenum) = '11' then output;
+14523  end;
+14524  dsid = close(dsid);
+14525  run;
+
+NOTE: The data set EMWS1.CLUS_PROFILE has 166 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.01 seconds
+      
+
+14526  proc sort data=EMWS1.Clus_PROFILE NOTHREADS;
+14527  by _VARIABLE_ _SEGMENT_;
+14528  run;
+
+NOTE: There were 166 observations read from the data set EMWS1.CLUS_PROFILE.
+NOTE: The data set EMWS1.CLUS_PROFILE has 166 observations and 7 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+14529  proc means data=EMWS1.Clus_PROFILE noprint missing NWAY;
+14530  class _VARIABLE_ _SEGMENT_;
+14531  var COUNT;
+14532  output out=WORK.Clus_STATCOUNT(keep=_SEGMENT_ _VARIABLE_ SUM) SUM=SUM;
+14533  run;
+
+NOTE: There were 166 observations read from the data set EMWS1.CLUS_PROFILE.
+NOTE: The data set WORK.CLUS_STATCOUNT has 30 observations and 3 variables.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.01 seconds
+      
+
+14534  proc sort data=WORK.Clus_STATCOUNT NOTHREADS;
+14535  by _VARIABLE_ _SEGMENT_;
+14536  run;
+
+NOTE: There were 30 observations read from the data set WORK.CLUS_STATCOUNT.
+NOTE: The data set WORK.CLUS_STATCOUNT has 30 observations and 3 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+14537  data EMWS1.Clus_PROFILE(drop=SUM);
+14538  label BYPERCENT= "%sysfunc(sasmsg(sashelp.dmine, rpt_percent_vlabel, NOQUOTE, _SEGMENT_))";
+14539  merge EMWS1.Clus_PROFILE WORK.Clus_STATCOUNT;
+14540  by _VARIABLE_ _SEGMENT_;
+14541  if SUM ne . then BYPERCENT = 100*COUNT/SUM;
+14542  run;
+
+NOTE: There were 166 observations read from the data set EMWS1.CLUS_PROFILE.
+NOTE: There were 30 observations read from the data set WORK.CLUS_STATCOUNT.
+NOTE: The data set EMWS1.CLUS_PROFILE has 166 observations and 8 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+14543  proc sort data=EMWS1.Clus_PROFILE NOTHREADS;
+14544  by _VARIABLE_;
+14545  run;
+
+NOTE: There were 166 observations read from the data set EMWS1.CLUS_PROFILE.
+NOTE: The data set EMWS1.CLUS_PROFILE has 166 observations and 8 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+14546  proc sort data=WORK.M08KH5EC;
+14547  by Name;
+14548  run;
+
+NOTE: There were 16 observations read from the data set WORK.M08KH5EC.
+NOTE: The data set WORK.M08KH5EC has 16 observations and 21 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+14549  data EMWS1.Clus_PROFILE;
+14550  merge EMWS1.Clus_PROFILE(in=_a) WORK.M08KH5EC(keep=Name Label Role rename=(Name=_Variable_ Label=_Label_));
+14551  by _Variable_;
+14552  label Role = "%sysfunc(sasmsg(sashelp.dmine, meta_role_vlabel ,  NOQUOTE))";
+14553  label Label = "%sysfunc(sasmsg(sashelp.dmine, meta_label_vlabel , NOQUOTE))";
+14554  if _a then output;
+14555  run;
+
+NOTE: Variable Label is uninitialized.
+WARNING: Multiple lengths were specified for the BY variable _VARIABLE_ by input data sets. This might cause unexpected results.
+NOTE: There were 166 observations read from the data set EMWS1.CLUS_PROFILE.
+NOTE: There were 16 observations read from the data set WORK.M08KH5EC.
+NOTE: The data set EMWS1.CLUS_PROFILE has 166 observations and 10 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+14556  proc sort data=EMWS1.Clus_PROFILE;
+14557  by _SEGMENT_ _VARIABLE_ _X_;
+14558  run;
+
+NOTE: There were 166 observations read from the data set EMWS1.CLUS_PROFILE.
+NOTE: The data set EMWS1.CLUS_PROFILE has 166 observations and 10 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+14559  data EMWS1.Clus_PROFILE(rename=(_VARIABLE_=Variable _X_=NumericValue _XLABEL_=FmtValue));
+14560  set EMWS1.Clus_PROFILE;
+14561  retain orderedValue 0;
+14562  label OrderedValue = "%sysfunc(sasmsg(sashelp.dmine, rpt_OrderedValue_vlabel, NOQUOTE))";
+14563  by _SEGMENT_ _VARIABLE_;
+14564  if first._variable_ then orderedValue=1;
+14565  else orderedValue+1;
+14566  run;
+
+NOTE: There were 166 observations read from the data set EMWS1.CLUS_PROFILE.
+NOTE: The data set EMWS1.CLUS_PROFILE has 166 observations and 11 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+14567  proc transpose data=EMWS1.Clus_OUTVAR out=WORK.Clus_OUTVAR(where=(COL1 ^in('IMPUTED','OMITTED')));
+14568  var IMP_domestic_gross--genre_Western1;
+14569  where _TYPE_ in('TYPE' 'VARIABLE');
+14570  run;
+
+NOTE: There were 2 observations read from the data set EMWS1.CLUS_OUTVAR.
+      WHERE _TYPE_ in ('TYPE', 'VARIABLE');
+NOTE: The data set WORK.CLUS_OUTVAR has 61 observations and 4 variables.
+NOTE: PROCEDURE TRANSPOSE used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.01 seconds
+      
+
+14571  *------------------------------------------------------------* ;
+14572  * Clus: DMVQ Variables;
+14573  *------------------------------------------------------------* ;
+14574  %macro dmvqvars;
+14575      IMP_domestic_gross IMP_domestic_opening IMP_foreign_gross IMP_runtime
+14576     IMP_ss_count IMP_ss_mean IMP_ss_median IMP_ss_p25 IMP_ss_p75 IMP_ss_std
+14577     IMP_total_gross IMP_user_rating_count tomatometer_count G0 G1
+14578     IMP_markets_missing0 IMP_markets_missing1 NR0 NR1 PG0 PG1 PG_130 PG_131 R0 R1
+14579     genre_Action0 genre_Action1 genre_Adventure0 genre_Adventure1
+14580     genre_AnimationManga0 genre_AnimationManga1 genre_ArthouseInter0
+14581     genre_ArthouseInter1 genre_ClassicsCult0 genre_ClassicsCult1 genre_Comedy0
+14582     genre_Comedy1 genre_DramaTele0 genre_DramaTele1 genre_FamilyKids0
+14583     genre_FamilyKids1 genre_Fantasy0 genre_Fantasy1 genre_FitnessSports0
+14584     genre_FitnessSports1 genre_HistDocument0 genre_HistDocument1 genre_Horror0
+14585     genre_Horror1 genre_MusicalPerfarts0 genre_MusicalPerfarts1 genre_Romance0
+14586     genre_Romance1 genre_Sci_fi0 genre_Sci_fi1 genre_Special_Interest0
+14587     genre_Special_Interest1 genre_ThrillMysSusp0 genre_ThrillMysSusp1
+14588     genre_Western0 genre_Western1
+14589  %mend ;
+14590  
+14591  
+
+14592  data WORK.Clus_temp;
+14593  set EMWS1.Clus_OUTMEAN;
+14594  _idvar_=left(put(_SEGMENT_,4.));
+14595  run;
+
+NOTE: There were 2 observations read from the data set EMWS1.CLUS_OUTMEAN.
+NOTE: The data set WORK.CLUS_TEMP has 2 observations and 71 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+14596  proc distance data=WORK.Clus_temp out=EMWS1.Clus_DISTANCE method=l(2) shape=square;
+14597  id _idvar_;
+14598  var interval(%dmvqvars);
+14599  run;
+
+NOTE: The data set EMWS1.CLUS_DISTANCE has 2 observations and 3 variables.
+NOTE: PROCEDURE DISTANCE used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.00 seconds
+      
+
+14600  proc datasets lib=EMWS1 nolist;
+14601  modify Clus_DISTANCE;
+14602  rename _idvar_=_SEGMENT_;
+NOTE: Renaming variable _idvar_ to _SEGMENT_.
+14603  run;
+
+NOTE: MODIFY was successful for EMWS1.CLUS_DISTANCE.DATA.
+14604  quit;
+
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.01 seconds
+      
+
+14605  *------------------------------------------------------------*;
+14606  * Clus: Creating data set for Input Mean report;
+14607  *------------------------------------------------------------*;
+14608  data temp(drop=_type_ over_all);
+14609  set EMWS1.Clus_OUTSTAT;
+14610  where _type_ in('DMDB_MEAN', 'CLUS_MEAN');
+14611  run;
+
+NOTE: There were 3 observations read from the data set EMWS1.CLUS_OUTSTAT.
+      WHERE _type_ in ('CLUS_MEAN', 'DMDB_MEAN');
+NOTE: The data set WORK.TEMP has 3 observations and 62 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+14612  proc sort data=temp;
+14613  by _SEGMENT_;
+14614  run;
+
+NOTE: There were 3 observations read from the data set WORK.TEMP.
+NOTE: The data set WORK.TEMP has 3 observations and 62 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+14615  proc stdize data=temp out=stdtemp pctlpts=0 100 outstat=stat;
+14616  var IMP_domestic_gross--genre_Western1;
+14617  run;
+
+NOTE: There were 3 observations read from the data set WORK.TEMP.
+NOTE: The data set WORK.STDTEMP has 3 observations and 62 variables.
+NOTE: The data set WORK.STAT has 10 observations and 62 variables.
+NOTE: PROCEDURE STDIZE used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+14618  proc transpose data=stat out=tstat(rename=(COL1=MEAN COL2=STD COL3=MIN COL4=MAX));
+14619  where _type_ in ('LOCATION', 'SCALE','P0', 'P100');
+14620  run;
+
+NOTE: There were 4 observations read from the data set WORK.STAT.
+      WHERE _type_ in ('LOCATION', 'P0', 'P100', 'SCALE');
+NOTE: The data set WORK.TSTAT has 61 observations and 6 variables.
+NOTE: PROCEDURE TRANSPOSE used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.01 seconds
+      
+
+14621  data tstat( rename=(_NAME_=NAME) keep=_NAME_ cv stdmin stdmax);
+14622  set tstat;
+14623  if std ^in (0, .) then do;
+14624  stdmin = abs((min-mean)/std);
+14625  stdmax = abs((max-mean)/std);
+14626  end;
+14627  if mean ^in(0, .) then cv = std/mean;
+14628  run;
+
+NOTE: There were 61 observations read from the data set WORK.TSTAT.
+NOTE: The data set WORK.TSTAT has 61 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+14629  proc sort data=tstat;
+14630  by NAME;
+14631  run;
+
+NOTE: There were 61 observations read from the data set WORK.TSTAT.
+NOTE: The data set WORK.TSTAT has 61 observations and 4 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+14632  proc transpose data=stdtemp out=tstdtemp(rename=(_NAME_=NAME _LABEL_=LABEL COL1=MEAN));
+14633  by _SEGMENT_;
+14634  run;
+
+NOTE: There were 3 observations read from the data set WORK.STDTEMP.
+NOTE: The data set WORK.TSTDTEMP has 183 observations and 4 variables.
+NOTE: PROCEDURE TRANSPOSE used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.00 seconds
+      
+
+14635  proc sort data=tstdtemp;
+14636  by NAME;
+14637  run;
+
+NOTE: There were 183 observations read from the data set WORK.TSTDTEMP.
+NOTE: The data set WORK.TSTDTEMP has 183 observations and 4 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+14638  data tstdtemp;
+14639  merge tstdtemp tstat;
+14640  by NAME;
+14641  STDMEAN = (MEAN + stdmin)/(stdmin + stdmax);
+14642  drop stdmin stdmax mean;
+14643  run;
+
+NOTE: There were 183 observations read from the data set WORK.TSTDTEMP.
+NOTE: There were 61 observations read from the data set WORK.TSTAT.
+NOTE: The data set WORK.TSTDTEMP has 183 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+14644  proc transpose data=EMWS1.Clus_OUTVAR out=tempVar(drop=_LABEL_ rename=( _NAME_=NAME VARIABLE=INPUT));
+14645  var IMP_domestic_gross--genre_Western1;
+14646  id _type_;
+14647  where _type_ = 'VARIABLE';
+14648  run;
+
+NOTE: There were 1 observations read from the data set EMWS1.CLUS_OUTVAR.
+      WHERE _type_='VARIABLE';
+NOTE: The data set WORK.TEMPVAR has 62 observations and 2 variables.
+NOTE: PROCEDURE TRANSPOSE used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.00 seconds
+      
+
+14649  proc sort data=tempVar;
+14650  by NAME;
+14651  run;
+
+NOTE: There were 62 observations read from the data set WORK.TEMPVAR.
+NOTE: The data set WORK.TEMPVAR has 62 observations and 2 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+14652  data EMWS1.Clus_INPUTMEAN(rename=(NAME=VARIABLE));
+14653  Length _SEGMENT_CHAR_ $7;
+14654  label _SEGMENT_ = "%sysfunc(sasmsg(sashelp.dmine, rpt_segmentName_vlabel,  NOQUOTE))" _SEGMENT_CHAR_ = "%sysfunc(sasmsg(sashelp.dmine, rpt_segmentId_vlabel,    NOQUOTE))" NAME = "%sysfunc(sasmsg(sashelp.dmine, rpt_variable_vlabel,     NOQUOTE))"
+14654! INPUT =
+14655     "%sysfunc(sasmsg(sashelp.dmine, rpt_input_vlabel,        NOQUOTE))" LABEL = "%sysfunc(sasmsg(sashelp.dmine, rpt_label_vlabel,        NOQUOTE))" CV = "%sysfunc(sasmsg(sashelp.dmine, rpt_cv_vlabel,           NOQUOTE))" STDMEAN =
+14656     "%sysfunc(sasmsg(sashelp.dmine, rpt_normmean_vlabel,     NOQUOTE))";
+14657  merge tempvar tstdtemp;
+14658  by NAME;
+14659  if LABEL='' then LABEL=NAME;
+14660  _SEGMENT_CHAR_ = strip(put(_SEGMENT_, best.));
+14661  if _SEGMENT_ = . then _SEGMENT_CHAR_='Overall';
+14662  run;
+
+NOTE: There were 62 observations read from the data set WORK.TEMPVAR.
+NOTE: There were 183 observations read from the data set WORK.TSTDTEMP.
+NOTE: The data set EMWS1.CLUS_INPUTMEAN has 184 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+14663  proc sort data=EMWS1.Clus_INPUTMEAN;
+14664  by descending cv;
+14665  run;
+
+NOTE: There were 184 observations read from the data set EMWS1.CLUS_INPUTMEAN.
+NOTE: The data set EMWS1.CLUS_INPUTMEAN has 184 observations and 7 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+14666  *------------------------------------------------------------*;
+14667  * Clus: Determining the important variables;
+14668  *------------------------------------------------------------*;
+
+14669  %let _nobs = 0;
+14670  data keepvars(rename=(NAME=INPUT));
+14671  set EMWS1.Clus_OUTIMPORT(where=(IMPORTANCE>0.5)) end=eof;
+14672  if eof then call symput('_nobs', strip(put(_N_, best.)));
+14673  run;
+
+NOTE: There were 6 observations read from the data set EMWS1.CLUS_OUTIMPORT.
+      WHERE IMPORTANCE>0.5;
+NOTE: The data set WORK.KEEPVARS has 6 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+14674  proc transpose data=EMWS1.Clus_OUTVAR out=tempVar(drop=_LABEL_ rename=( _NAME_=NAME VARIABLE=INPUT));
+14675  var IMP_domestic_gross--genre_Western1;
+14676  id _type_;
+14677  where _type_ = 'VARIABLE';
+14678  run;
+
+NOTE: There were 1 observations read from the data set EMWS1.CLUS_OUTVAR.
+      WHERE _type_='VARIABLE';
+NOTE: The data set WORK.TEMPVAR has 62 observations and 2 variables.
+NOTE: PROCEDURE TRANSPOSE used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.00 seconds
+      
+
+14679  proc sort data=keepvars;
+14680  by INPUT;
+14681  run;
+
+NOTE: There were 6 observations read from the data set WORK.KEEPVARS.
+NOTE: The data set WORK.KEEPVARS has 6 observations and 5 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+14682  proc sort data=tempvar;
+14683  by INPUT;
+14684  run;
+
+NOTE: There were 62 observations read from the data set WORK.TEMPVAR.
+NOTE: The data set WORK.TEMPVAR has 62 observations and 2 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+14685  data vars;
+14686  merge tempvar keepvars(in=b);
+14687  by INPUT;
+14688  if b then output;
+14689  run;
+
+WARNING: Multiple lengths were specified for the BY variable INPUT by input data sets. This might cause unexpected results.
+NOTE: There were 62 observations read from the data set WORK.TEMPVAR.
+NOTE: There were 6 observations read from the data set WORK.KEEPVARS.
+NOTE: The data set WORK.VARS has 6 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+14690  proc sort data=vars;
+14691  by descending importance;
+14692  run;
+
+NOTE: There were 6 observations read from the data set WORK.VARS.
+NOTE: The data set WORK.VARS has 6 observations and 6 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+14693  data _null_;
+14694  set vars;
+14695  if _N_=1 then call symput('CLUS_PROFVARS', strip(NAME));
+14696  else call symput('CLUS_PROFVARS',symget('CLUS_PROFVARS')!!' '!!strip(NAME));
+14697  run;
+
+NOTE: There were 6 observations read from the data set WORK.VARS.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+14698  *------------------------------------------------------------*;
+14699  * mergeVarMeansandClusLabel;
+14700  *------------------------------------------------------------*;
+14701  data temp(keep=_SEGMENT_ &CLUS_PROFVARS);
+14702  length _SEGMENT_ &CLUS_PROFVARS 8;
+14703  set EMWS1.Clus_OUTSTAT;
+14704  where _type_ ='CLUS_MEAN';
+14705  run;
+
+NOTE: There were 2 observations read from the data set EMWS1.CLUS_OUTSTAT.
+      WHERE _type_='CLUS_MEAN';
+NOTE: The data set WORK.TEMP has 2 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+14706  proc sort data=temp;
+14707  by _SEGMENT_;
+14708  run;
+
+NOTE: There were 2 observations read from the data set WORK.TEMP.
+NOTE: The data set WORK.TEMP has 2 observations and 7 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+14709  data EMWS1.Clus_LABEL;
+14710  merge EMWS1.Clus_LABEL(keep=_SEGMENT_ LABEL) temp;
+14711  by _SEGMENT_;
+14712  run;
+
+NOTE: There were 2 observations read from the data set EMWS1.CLUS_LABEL.
+NOTE: There were 2 observations read from the data set WORK.TEMP.
+NOTE: The data set EMWS1.CLUS_LABEL has 2 observations and 8 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+

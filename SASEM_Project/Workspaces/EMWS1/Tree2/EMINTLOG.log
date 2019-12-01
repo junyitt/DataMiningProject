@@ -16,7 +16,7 @@ NOTE: There were 1 observations read from the data set SASHELP.VEXTFL.
       WHERE fileref='#LN00136';
 NOTE: DATA statement used (Total process time):
       real time           0.00 seconds
-      cpu time            0.00 seconds
+      cpu time            0.01 seconds
       
 
 18828      %symdel em_filemodtime;
@@ -27,7 +27,7 @@ WARNING: Attempt to delete macro variable EM_FILEMODTIME failed. Variable not fo
 18832      %let em_Run = N;
 NOTE: PROCEDURE DISPLAY used (Total process time):
       real time           0.01 seconds
-      cpu time            0.00 seconds
+      cpu time            0.01 seconds
       
 
 NOTE: %INCLUDE (level 1) file TEMP is file SASHELP.EMMODL.TREE_TRAINMACROS.SOURCE.
@@ -765,19 +765,19 @@ NOTE: %INCLUDE (level 1) ending.
 NOTE: Fileref TEMP has been deassigned.
 NOTE: Variable _WARN_ is uninitialized.
 NOTE: View EMWS1.IMPT_TRAIN.VIEW used (Total process time):
-      real time           0.11 seconds
-      cpu time            0.07 seconds
+      real time           0.09 seconds
+      cpu time            0.04 seconds
       
 NOTE: There were 2438 observations read from the data set EMWS1.PART_TRAIN.
 NOTE: PROCEDURE SQL used (Total process time):
-      real time           0.12 seconds
-      cpu time            0.09 seconds
+      real time           0.10 seconds
+      cpu time            0.04 seconds
       
 
 NOTE: EXPLOREOBS EMWS1.Impt_TRAIN : vars= 59 : recl= 676 : max=20000 : def= 2000
 
-NOTE: There were 814 observations read from the data set EMWS1.TREE2_EMTREE.
-NOTE: The data set EMWS1.TREE2_BROWSETREE has 814 observations and 4 variables.
+NOTE: There were 360 observations read from the data set EMWS1.TREE2_EMTREE.
+NOTE: The data set EMWS1.TREE2_BROWSETREE has 360 observations and 4 variables.
 NOTE: DATA statement used (Total process time):
       real time           0.01 seconds
       cpu time            0.00 seconds

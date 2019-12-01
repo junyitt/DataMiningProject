@@ -11,8 +11,8 @@
  AVG="Y" RASE="N" CreateSample="DEFAULT" SampleMethod="RANDOM" SampleSize="10000"
  SampleSeed="12345" ForceRun="N" RunAction="Train" Component="DecisionTree" Criterion="DEFAULT"
  Dummy="N" Predict="Y" ImportedTreeData="" RawCreateTime="1889539350.8" CreateTime="16NOV2019:16:02:31"
- RunId="5ad8bd8c-d322-4b61-8257-5fae08d0258f" RawLastTimeRun="1889633179" RawRunTime="3103.4809999"
- LastTimeRun="17NOV2019:18:06:19" RunTime="0 Hr. 51 Min. 43.48 Sec.">
+ RunId="e3d9281b-c6e9-4fe9-92f0-e58d1fdee251" RawLastTimeRun="1889649452.2" RawRunTime="1052.7"
+ LastTimeRun="17NOV2019:22:37:32" RunTime="0 Hr. 17 Min. 32.70 Sec.">
 <VARIABLEPROPERTIES/>
 <FILEPROPERTIES ><![CDATA[
 USERTRAINCODE

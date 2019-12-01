@@ -42,7 +42,7 @@ IF  NOT MISSING(IMP_ss_mean ) AND
         0.40709466985829 <= IMP_ss_std  THEN DO;
     IF  NOT MISSING(IMP_domestic_gross ) AND 
           145735.087697423 <= IMP_domestic_gross  THEN DO;
-      _NODE_  =                   69;
+      _NODE_  =                   84;
       _LEAF_  =                    8;
       P_audience_score_positiveTrue  =     0.73972602739726;
       P_audience_score_positiveFalse  =     0.26027397260273;
@@ -54,7 +54,7 @@ IF  NOT MISSING(IMP_ss_mean ) AND
       U_audience_score_positive  = 'True' ;
       END;
     ELSE DO;
-      _NODE_  =                   68;
+      _NODE_  =                   83;
       _LEAF_  =                    7;
       P_audience_score_positiveTrue  =     0.44805194805194;
       P_audience_score_positiveFalse  =     0.55194805194805;
@@ -69,7 +69,7 @@ IF  NOT MISSING(IMP_ss_mean ) AND
   ELSE DO;
     IF  NOT MISSING(IMP_user_rating_count ) AND 
       IMP_user_rating_count  <                474.5 THEN DO;
-      _NODE_  =                   66;
+      _NODE_  =                   81;
       _LEAF_  =                    5;
       P_audience_score_positiveTrue  =     0.61168384879725;
       P_audience_score_positiveFalse  =     0.38831615120274;
@@ -81,7 +81,7 @@ IF  NOT MISSING(IMP_ss_mean ) AND
       U_audience_score_positive  = 'True' ;
       END;
     ELSE DO;
-      _NODE_  =                   67;
+      _NODE_  =                   82;
       _LEAF_  =                    6;
       P_audience_score_positiveTrue  =     0.86116700201207;
       P_audience_score_positiveFalse  =     0.13883299798792;
@@ -99,7 +99,7 @@ ELSE DO;
     IMP_ss_std  <     0.46818343807915 THEN DO;
     IF  NOT MISSING(IMP_user_rating_count ) AND 
                      15790 <= IMP_user_rating_count  THEN DO;
-      _NODE_  =                   63;
+      _NODE_  =                   78;
       _LEAF_  =                    2;
       P_audience_score_positiveTrue  =     0.83098591549295;
       P_audience_score_positiveFalse  =     0.16901408450704;
@@ -111,7 +111,7 @@ ELSE DO;
       U_audience_score_positive  = 'True' ;
       END;
     ELSE DO;
-      _NODE_  =                   62;
+      _NODE_  =                   77;
       _LEAF_  =                    1;
       P_audience_score_positiveTrue  =     0.36363636363636;
       P_audience_score_positiveFalse  =     0.63636363636363;
@@ -127,7 +127,7 @@ ELSE DO;
     _ARBFMT_12 = PUT( genre_HistDocument , BEST12.);
      %DMNORMIP( _ARBFMT_12);
     IF _ARBFMT_12 IN ('1' ) THEN DO;
-      _NODE_  =                   64;
+      _NODE_  =                   79;
       _LEAF_  =                    3;
       P_audience_score_positiveTrue  =      0.6025641025641;
       P_audience_score_positiveFalse  =     0.39743589743589;
@@ -139,7 +139,7 @@ ELSE DO;
       U_audience_score_positive  = 'True' ;
       END;
     ELSE DO;
-      _NODE_  =                   65;
+      _NODE_  =                   80;
       _LEAF_  =                    4;
       P_audience_score_positiveTrue  =     0.21258134490238;
       P_audience_score_positiveFalse  =     0.78741865509761;
