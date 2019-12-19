@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?><_ROOT_  Location="CATALOG" Catalog="SASHELP.EMMODL.TREE.SOURCE" ToolType="MODEL" TrainMode="BATCH"
+ ImportModel="N" Freeze="N" UseMultipleTarget="N" Precision="4" IntervalCriterion="PROBF"
+ NominalCriterion="PROBCHISQ" OrdinalCriterion="ENTROPY" SigLevel="0.2" Splitsize="."
+ LeafSize="5" MinCatSize="5" Maxbranch="2" Maxdepth="6" Nrules="5" Nsurrs="0" MissingValue="USEINSEARCH"
+ UseVarOnce="N" SplitPrecision="4" Subtree="ASSESSMENT" NSubtree="1" AssessMeasure="PROFIT/LOSS"
+ AssessPercentage="0.25" NodeSample="20000" Exhaustive="5000" Kass="Y" KassApply="BEFORE"
+ Depth="Y" Inputs="N" NumInputs="1" VarSelection="Y" Leafid="Y" NodeRole="SEGMENT"
+ Performance="DISK" CV="N" CVNIter="10" CVRepeat="1" CVSeed="12345" ObsImportance="N"
+ NumSingleImp="5" UseDecision="N" UsePriors="N" ClassColorBy="PERCENTCORRECT" IntColorBy="AVG"
+ ShowNodeId="Y" ShowValid="Y" Pred="N" Target="ALL" Count="Y" ProfitLoss="NONE" PercentCorrect="N"
+ AVG="Y" RASE="N" CreateSample="DEFAULT" SampleMethod="RANDOM" SampleSize="10000"
+ SampleSeed="12345" ForceRun="N" RunAction="Train" Component="DecisionTree" Criterion="DEFAULT"
+ Dummy="N" Predict="Y" ImportedTreeData="" RawCreateTime="1891783880.8" CreateTime="12DEC2019:15:31:21"
+ RunId="178e1af9-f283-4138-9e7d-794320fe1ecb">
+<VARIABLEPROPERTIES/>
+<FILEPROPERTIES ><![CDATA[
+USERTRAINCODE
+USERSCORECODE
+USERREPORTCODE
+EMNOTES
+]]>
+</FILEPROPERTIES><EMTARGETATTRIBUTES >
+<AUDIENCE_SCORE_POSITIVE >
+<DECDATA  Table="EMWS1.Tree2_audience_score_p_DD">
+<DATA >
+<OBS  AUDIENCE_SCORE_POSITIVE="TRUE" COUNT="1159" DATAPRIOR="0.4753896637" TRAINPRIOR="0.4753896637"
+ DECPRIOR="." DECISION1="1" DECISION2="0"/>
+<OBS  AUDIENCE_SCORE_POSITIVE="FALSE" COUNT="1279" DATAPRIOR="0.5246103363" TRAINPRIOR="0.5246103363"
+ DECPRIOR="." DECISION1="0" DECISION2="1"/>
+</DATA>
+<METADATA >
+<VARIABLE  NAME="audience_score_positive" LABEL="" LENGTH="32" FORMAT="" TYPE="C"/>
+<VARIABLE  NAME="COUNT" LABEL="Level Counts" LENGTH="8" FORMAT="10." TYPE="N"/>
+<VARIABLE  NAME="DATAPRIOR" LABEL="Data Proportions" LENGTH="8" FORMAT="" TYPE="N"/>
+<VARIABLE  NAME="TRAINPRIOR" LABEL="Training Proportions" LENGTH="8" FORMAT="" TYPE="N"/>
+<VARIABLE  NAME="DECPRIOR" LABEL="Decision Priors" LENGTH="8" FORMAT="" TYPE="N"/>
+<VARIABLE  NAME="DECISION1" LABEL="TRUE" LENGTH="8" FORMAT="" TYPE="N"/>
+<VARIABLE  NAME="DECISION2" LABEL="FALSE" LENGTH="8" FORMAT="" TYPE="N"/>
+</METADATA>
+</DECDATA>
+<DECMETA  Table="EMWS1.Tree2_audience_score_p_DM">
+<DATA >
+<OBS  _TYPE_="MATRIX" VARIABLE="" LABEL="" LEVEL="PROFIT" EVENT="" ORDER="" FORMAT="" TYPE=""
+ COST="" USE="N"/>
+<OBS  _TYPE_="TARGET" VARIABLE="audience_score_positive" LABEL="" LEVEL="BINARY" EVENT="TRUE"
+ ORDER="" FORMAT="$5." TYPE="C" COST="" USE=""/>
+<OBS  _TYPE_="DECISION" VARIABLE="DECISION1" LABEL="TRUE" LEVEL="" EVENT="" ORDER="" FORMAT=""
+ TYPE="N" COST="" USE="Y"/>
+<OBS  _TYPE_="DECISION" VARIABLE="DECISION2" LABEL="FALSE" LEVEL="" EVENT="" ORDER="" FORMAT=""
+ TYPE="N" COST="" USE="Y"/>
+<OBS  _TYPE_="DATAPRIOR" VARIABLE="DATAPRIOR" LABEL="Data Prior" LEVEL="" EVENT="" ORDER=""
+ FORMAT="" TYPE="N" COST="" USE="N"/>
+<OBS  _TYPE_="TRAINPRIOR" VARIABLE="TRAINPRIOR" LABEL="Training Prior" LEVEL="" EVENT=""
+ ORDER="" FORMAT="" TYPE="N" COST="" USE="N"/>
+<OBS  _TYPE_="DECPRIOR" VARIABLE="DECPRIOR" LABEL="Decision Prior" LEVEL="" EVENT="" ORDER=""
+ FORMAT="" TYPE="N" COST="" USE="N"/>
+<OBS  _TYPE_="PREDICTED" VARIABLE="P_audience_score_positiveTrue" LABEL="Predicted: audience_score_positive=True"
+ LEVEL="TRUE" EVENT="" ORDER="" FORMAT="" TYPE="N" COST="" USE=""/>
+<OBS  _TYPE_="RESIDUAL" VARIABLE="R_audience_score_positiveTrue" LABEL="Residual: audience_score_positive=True"
+ LEVEL="TRUE" EVENT="" ORDER="" FORMAT="" TYPE="N" COST="" USE=""/>
+<OBS  _TYPE_="PREDICTED" VARIABLE="P_audience_score_positiveFalse" LABEL="Predicted: audience_score_positive=False"
+ LEVEL="FALSE" EVENT="" ORDER="" FORMAT="" TYPE="N" COST="" USE=""/>
+<OBS  _TYPE_="RESIDUAL" VARIABLE="R_audience_score_positiveFalse" LABEL="Residual: audience_score_positive=False"
+ LEVEL="FALSE" EVENT="" ORDER="" FORMAT="" TYPE="N" COST="" USE=""/>
+<OBS  _TYPE_="FROM" VARIABLE="F_audience_score_positive" LABEL="From: audience_score_positive"
+ LEVEL="" EVENT="" ORDER="" FORMAT="" TYPE="C" COST="" USE=""/>
+<OBS  _TYPE_="INTO" VARIABLE="I_audience_score_positive" LABEL="Into: audience_score_positive"
+ LEVEL="" EVENT="" ORDER="" FORMAT="" TYPE="C" COST="" USE=""/>
+</DATA>
+<METADATA >
+<VARIABLE  NAME="_TYPE_" LABEL="Type" LENGTH="32" FORMAT="" TYPE="C"/>
+<VARIABLE  NAME="VARIABLE" LABEL="Variable" LENGTH="32" FORMAT="" TYPE="C"/>
+<VARIABLE  NAME="LABEL" LABEL="Label" LENGTH="256" FORMAT="" TYPE="C"/>
+<VARIABLE  NAME="LEVEL" LABEL="Measurement Level" LENGTH="32" FORMAT="" TYPE="C"/>
+<VARIABLE  NAME="EVENT" LABEL="Target Event" LENGTH="32" FORMAT="" TYPE="C"/>
+<VARIABLE  NAME="ORDER" LABEL="Order" LENGTH="10" FORMAT="" TYPE="C"/>
+<VARIABLE  NAME="FORMAT" LABEL="Format" LENGTH="32" FORMAT="" TYPE="C"/>
+<VARIABLE  NAME="TYPE" LABEL="Type" LENGTH="1" FORMAT="" TYPE="C"/>
+<VARIABLE  NAME="COST" LABEL="Cost" LENGTH="32" FORMAT="" TYPE="C"/>
+<VARIABLE  NAME="USE" LABEL="Use" LENGTH="1" FORMAT="" TYPE="C"/>
+</METADATA>
+</DECMETA>
+</AUDIENCE_SCORE_POSITIVE>
+</EMTARGETATTRIBUTES>
+</_ROOT_>

@@ -1,0 +1,140 @@
+*------------------------------------------------------------*
+ Node = 7
+*------------------------------------------------------------*
+if tomatometer_count >= 27.5
+AND genre_HistDocument IS ONE OF: 1
+then 
+ Tree Node Identifier   = 7
+ Number of Observations = 152
+ Predicted: audience_score_positive=True = 0.86
+ Predicted: audience_score_positive=False = 0.14
+ 
+*------------------------------------------------------------*
+ Node = 9
+*------------------------------------------------------------*
+if tomatometer_count < 140.5 or MISSING
+AND genre_HistDocument IS ONE OF: 0 or MISSING
+AND genre_DramaTele IS ONE OF: 0
+then 
+ Tree Node Identifier   = 9
+ Number of Observations = 713
+ Predicted: audience_score_positive=True = 0.26
+ Predicted: audience_score_positive=False = 0.74
+ 
+*------------------------------------------------------------*
+ Node = 10
+*------------------------------------------------------------*
+if tomatometer_count >= 140.5
+AND genre_HistDocument IS ONE OF: 0 or MISSING
+AND Imputed domestic_opening < 3169860
+then 
+ Tree Node Identifier   = 10
+ Number of Observations = 153
+ Predicted: audience_score_positive=True = 0.84
+ Predicted: audience_score_positive=False = 0.16
+ 
+*------------------------------------------------------------*
+ Node = 12
+*------------------------------------------------------------*
+if tomatometer_count < 27.5 or MISSING
+AND genre_HistDocument IS ONE OF: 1
+AND Imputed total_gross < 4674.5
+then 
+ Tree Node Identifier   = 12
+ Number of Observations = 25
+ Predicted: audience_score_positive=True = 0.36
+ Predicted: audience_score_positive=False = 0.64
+ 
+*------------------------------------------------------------*
+ Node = 13
+*------------------------------------------------------------*
+if tomatometer_count < 27.5 or MISSING
+AND genre_HistDocument IS ONE OF: 1
+AND Imputed total_gross >= 4674.5 or MISSING
+then 
+ Tree Node Identifier   = 13
+ Number of Observations = 219
+ Predicted: audience_score_positive=True = 0.68
+ Predicted: audience_score_positive=False = 0.32
+ 
+*------------------------------------------------------------*
+ Node = 16
+*------------------------------------------------------------*
+if tomatometer_count < 140.5 or MISSING
+AND genre_HistDocument IS ONE OF: 0 or MISSING
+AND genre_DramaTele IS ONE OF: 1 or MISSING
+AND Imputed runtime < 101.5 or MISSING
+then 
+ Tree Node Identifier   = 16
+ Number of Observations = 543
+ Predicted: audience_score_positive=True = 0.36
+ Predicted: audience_score_positive=False = 0.64
+ 
+*------------------------------------------------------------*
+ Node = 22
+*------------------------------------------------------------*
+if tomatometer_count >= 140.5
+AND genre_HistDocument IS ONE OF: 0 or MISSING
+AND Imputed domestic_opening >= 3169860 or MISSING
+AND Imputed domestic_gross < 1.008E8 or MISSING
+then 
+ Tree Node Identifier   = 22
+ Number of Observations = 147
+ Predicted: audience_score_positive=True = 0.46
+ Predicted: audience_score_positive=False = 0.54
+ 
+*------------------------------------------------------------*
+ Node = 23
+*------------------------------------------------------------*
+if tomatometer_count >= 140.5
+AND genre_HistDocument IS ONE OF: 0 or MISSING
+AND Imputed domestic_opening >= 3169860 or MISSING
+AND Imputed domestic_gross >= 1.008E8
+then 
+ Tree Node Identifier   = 23
+ Number of Observations = 82
+ Predicted: audience_score_positive=True = 0.83
+ Predicted: audience_score_positive=False = 0.17
+ 
+*------------------------------------------------------------*
+ Node = 30
+*------------------------------------------------------------*
+if tomatometer_count < 140.5 or MISSING
+AND genre_ThrillMysSusp IS ONE OF: 0 or MISSING
+AND genre_HistDocument IS ONE OF: 0 or MISSING
+AND genre_DramaTele IS ONE OF: 1 or MISSING
+AND Imputed runtime >= 101.5
+then 
+ Tree Node Identifier   = 30
+ Number of Observations = 344
+ Predicted: audience_score_positive=True = 0.59
+ Predicted: audience_score_positive=False = 0.41
+ 
+*------------------------------------------------------------*
+ Node = 42
+*------------------------------------------------------------*
+if tomatometer_count < 140.5 or MISSING
+AND genre_ThrillMysSusp IS ONE OF: 1
+AND genre_HistDocument IS ONE OF: 0 or MISSING
+AND genre_DramaTele IS ONE OF: 1 or MISSING
+AND Imputed runtime < 119 AND Imputed runtime >= 101.5 or MISSING
+then 
+ Tree Node Identifier   = 42
+ Number of Observations = 45
+ Predicted: audience_score_positive=True = 0.24
+ Predicted: audience_score_positive=False = 0.76
+ 
+*------------------------------------------------------------*
+ Node = 43
+*------------------------------------------------------------*
+if tomatometer_count < 140.5 or MISSING
+AND genre_ThrillMysSusp IS ONE OF: 1
+AND genre_HistDocument IS ONE OF: 0 or MISSING
+AND genre_DramaTele IS ONE OF: 1 or MISSING
+AND Imputed runtime >= 119
+then 
+ Tree Node Identifier   = 43
+ Number of Observations = 15
+ Predicted: audience_score_positive=True = 0.80
+ Predicted: audience_score_positive=False = 0.20
+ 

@@ -1,0 +1,43 @@
+ 
+                                                                                                                                                                                                                                                                
+ 
+ 
+Variable Summary
+
+            Measurement    Frequency
+Role           Level         Count
+
+ASSESS       NOMINAL            1   
+ID           INTERVAL           1   
+ID           NOMINAL            1   
+INPUT        BINARY            25   
+INPUT        INTERVAL          13   
+REJECTED     BINARY             1   
+REJECTED     INTERVAL           3   
+TARGET       BINARY             1   
+ 
+                                                                                                                                                                                                                                                                
+ 
+ 
+Model Events
+
+                                                   Number
+                                    Measurement      of
+        Target             Event       Level       Levels      Order       Label
+
+audience_score_positive    TRUE       BINARY          2      Descending         
+ 
+                                                                                                                                                                                                                                                                
+ 
+ 
+Predicted and decision variables
+
+Type                    Variable                                Label
+
+TARGET       audience_score_positive                                                   
+PREDICTED    P_audience_score_positiveTrue     Predicted: audience_score_positive=True 
+RESIDUAL     R_audience_score_positiveTrue     Residual: audience_score_positive=True  
+PREDICTED    P_audience_score_positiveFalse    Predicted: audience_score_positive=False
+RESIDUAL     R_audience_score_positiveFalse    Residual: audience_score_positive=False 
+FROM         F_audience_score_positive         From: audience_score_positive           
+INTO         I_audience_score_positive         Into: audience_score_positive           

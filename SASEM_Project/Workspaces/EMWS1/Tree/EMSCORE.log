@@ -1,0 +1,1322 @@
+*------------------------------------------------------------*
+* Score Log
+Date:                December 12, 2019
+Time:                15:33:54
+*------------------------------------------------------------*
+16644  %let EMEXCEPTIONSTRING=;
+16645  *------------------------------------------------------------*;
+16646  * SCORE: Tree;
+16647  *------------------------------------------------------------*;
+16648  %let EM_ACTION = SCORE;
+16649  %let syscc = 0;
+16650  %macro main;
+16651  
+16652    %if %upcase(&EM_ACTION) = CREATE %then %do;
+16653      filename temp catalog 'sashelp.emmodl.tree_create.source';
+16654      %include temp;
+16655      filename temp;
+16656  
+16657      %em_tree_create;
+16658    %end;
+16659  
+16660     %else
+16661     %if %upcase(&EM_ACTION) = TRAIN %then %do;
+16662  
+16663         filename temp catalog 'sashelp.emmodl.tree_train.source';
+16664         %include temp;
+16665         filename temp;
+16666         %em_tree_train;
+16667     %end;
+16668  
+16669    %else
+16670    %if %upcase(&EM_ACTION) = SCORE %then %do;
+16671      filename temp catalog 'sashelp.emmodl.tree_score.source';
+16672      %include temp;
+16673      filename temp;
+16674  
+16675      %em_tree_score;
+16676  
+16677    %end;
+16678  
+16679    %else
+16680    %if %upcase(&EM_ACTION) = REPORT %then %do;
+16681  
+16682         filename temp catalog 'sashelp.emmodl.tree_report.source';
+16683         %include temp;
+16684         filename temp;
+16685  
+16686         %em_tree_report;
+16687     %end;
+16688  
+16689    %else
+16690    %if %upcase(&EM_ACTION) = OPENINT %then %do;
+16691  
+16692         filename temp catalog 'sashelp.emmodl.tree_actions.source';
+16693         %include temp;
+16694         filename temp;
+16695         %EM_TREE_OPENTREEVIEWER;
+16696  
+16697     %end;
+16698  
+16699    %else
+16700    %if %upcase(&EM_ACTION) = CLOSEINT %then %do;
+16701  
+16702         filename temp catalog 'sashelp.emmodl.tree_actions.source';
+16703         %include temp;
+16704         filename temp;
+16705         %EM_TREE_CLOSETREEVIEWER;
+16706  
+16707     %end;
+16708  
+16709  
+16710     %doendm:
+16711  %mend main;
+16712  
+16713  %main;
+NOTE: %INCLUDE (level 1) file TEMP is file SASHELP.EMMODL.TREE_SCORE.SOURCE.
+16715 +%macro em_tree_score;
+16717 +   /* determine if multiple targets will be processed */
+16718 +   %let em_tree_multipleTargets=N;
+16719 +   %let em_tree_numTarget=1;
+16720 +   %if "&EM_PROPERTY_USEMULTIPLETARGET" eq "Y" %then %do;
+16721 +      /* determine if there are any ordinal target variables - if so, multiple targets are not supported */
+16722 +      %if &EM_NUM_ORDINAL_TARGET gt 0 %then %do;
+16723 +         %let em_tree_multipleTargets=N;
+16724 +      %end;
+16725 +      %else %do;
+16726 +         /* create macro array of targets  */
+16727 +         data _null_;
+16728 +           set &EM_DATA_VARIABLESET(where=(ROLE='TARGET' AND LEVEL^='ORDINAL')) end=eof;
+16729 +           call symput('em_tree_targetVars'!!strip(put(_N_, BEST.)), strip(Name));
+16730 +           if eof then
+16731 +             call symput('em_tree_numTarget', strip(put(_N_, BEST.)));
+16732 +        run;
+16734 +        %if &em_tree_numTarget gt 1 %then %do;
+16735 +           %let em_tree_multipleTargets=Y;
+16736 +        %end;
+16737 +      %end;
+16738 +   %end;
+16740 +   /* build flow and publish scoring code */
+16741 +   %EM_GETNAME(key=TREEFLOW, type=FILE, extension=sas);
+16742 +   %EM_GETNAME(key=TREEPUBLISH, type=FILE, extension=sas);
+16744 +   filename treeflow "&EM_USER_TREEFLOW";
+16745 +   filename treepub "&EM_USER_TREEPUBLISH";
+16747 +   filename flowref  "&EM_FILE_EMFLOWSCORECODE";
+16748 +   filename pubref   "&EM_FILE_EMPUBLISHSCORECODE";
+16750 +   %em_copyfile(infref=treeflow, outfref=flowref);
+16751 +   %em_copyfile(infref=treepub, outfref=pubref);
+16753 +   filename treeflow;
+16754 +   filename treepub;
+16756 +   /* if priors are used, add code to generate unadjusted residuals in export */
+16757 +   %let useAdjPriors = N;
+16758 +   data _null_;
+16759 +     set &EM_DEC_DECMETA(where=(_TYPE_="DECPRIOR"));
+16760 +     if USE="Y" then call symput('useAdjPriors', 'Y');
+16761 +   run;
+16762 +   %if (("&em_tree_multipleTargets" eq "N") AND ("&useAdjPriors" eq "Y")) %then %do;
+16763 +      filename temp catalog 'sashelp.emutil.em_makeunadjustedresidualvars.source';
+16764 +      %include temp;
+16765 +      filename temp;
+16767 +      %EM_GETNAME(key=adjResidualCode, type=FILE, extension=sas);
+16768 +      filename adjref "&EM_USER_adjResidualCode";
+16769 +      %makeUnadjustedResidualVars(target=%EM_TARGET, decmeta=&EM_DEC_DECMETA, fref=adjref);
+16771 +      %em_copyfile(infref=adjref, outfref=flowref, append=Y);
+16773 +      filename adjref;
+16774 +   %end;
+16776 +   /* LEAF */
+16777 +   %if "&EM_PROPERTY_LEAFID" eq "Y" %then %do;
+16778 +      data _null_;
+16779 +        file flowref mod;
+16780 +        put 'drop _LEAF_;';
+16781 +      run;
+16783 +      data _null_;
+16784 +        file pubref mod;
+16785 +        put 'drop _LEAF_;';
+16786 +      run;
+16788 +   %end;
+16790 +   filename flowref;
+16791 +   filename pubref;
+16793 +   /* em_metachange code */
+16794 +   %if "&EM_PROPERTY_LEAFID" eq "Y" %then %do;
+16795 +     %EM_METACHANGE(name=_NODE_, role=&EM_PROPERTY_NODEROLE, LEVEL=NOMINAL);
+16796 +   %end;
+16798 +   /* variable selection based on importance stat    */
+16799 +   %if "&EM_PROPERTY_VARSELECTION" eq "Y" %then %do;
+16800 +     %EM_GETNAME(key=OUTIMPORT, type=DATA);
+16801 +     %let dsid = %sysfunc(open(&EM_USER_OUTIMPORT(where=(IMPORTANCE<0.05))));
+16802 +     %let varnum = %sysfunc(varnum(&dsid, NAME));
+16803 +     %let obs = %sysfunc(fetch(&dsid));
+16804 +     %do %while(&obs=0);
+16805 +       %let temp = %nrbquote(%sysfunc(getvarc(&dsid, &varnum)));
+16806 +       %let varname = %nrbquote(%sysfunc(tranwrd(&temp,  %str(%"),"")));
+16807 +       %EM_METACHANGE(name=&varname, role=REJECTED);
+16808 +       %let obs = %sysfunc(fetch(&dsid));
+16809 +     %end;
+16810 +     %if &dsid %then %let dsid=%sysfunc(close(&dsid));
+16811 +   %end;
+16813 +   /* set Q_ varaibles to role of ASSESS when in the presense of prior probabilities */
+16814 +   %if %sysfunc(exist(&EM_DEC_DECMETA)) %then %do;
+16815 +    %let tree_pred_vars = ;
+16816 +    %let tree_pred_lvl =;
+16817 +    %let numpred= 0;
+16819 +    data _null_;
+16820 +     set &EM_DEC_DECMETA(where=(_TYPE_="PREDICTED")) end=eof;
+16821 +     call symput('tree_pred_vars'!!strip(put(_N_, BEST.)), strip(VARIABLE));
+16822 +     call symput('tree_pred_lvl'!!strip(put(_N_, BEST.)), strip(LEVEL));
+16823 +     if eof then
+16824 +       call symput('numpred', strip(put(_N_, BEST.)));
+16825 +    run;
+16826 +   %end;
+16828 +   %if &numpred ne 0 %then %do;
+16829 +    %do i=1 %to &numpred;
+16830 +      %let qpred = Q%substr(&&tree_pred_vars&i,2);
+16831 +      %EM_METACHANGE(name=&qpred, role=ASSESS);
+16832 +    %end;
+16833 +   %end;
+16835 +   /* determine if multiple targets will be processed */
+16836 +   %let em_tree_multipleTargets=N;
+16837 +   %let em_tree_numTarget=1;
+16838 +   %if "&EM_PROPERTY_USEMULTIPLETARGET" eq "Y" %then %do;
+16839 +      /* determine if there are any ordinal target variables - if so, multiple targets are not supported */
+16840 +      %if &EM_NUM_ORDINAL_TARGET gt 0 %then %do;
+16841 +         %let em_tree_multipleTargets=N;
+16842 +      %end;
+16843 +      %else %do;
+16844 +        data _null_;
+16845 +          set &EM_DATA_VARIABLESET(where=(ROLE='TARGET' AND LEVEL^='ORDINAL')) end=eof;
+16846 +          if eof then
+16847 +            call symput('em_tree_numTarget', strip(put(_N_, BEST.)));
+16848 +        run;
+16850 +        %if &em_tree_numTarget gt 1 %then %do;
+16851 +           %let em_tree_multipleTargets=Y;
+16852 +        %end;
+16853 +     %end;
+16854 +   %end;
+16856 +   /* need to include this code to do the %em_report for OUTIMPORT here instead of in Report code so _loop data set is created when group processing */
+16857 +   %if "&em_tree_multipleTargets" eq "N" %then %do;
+16859 +      /* variable importance */
+16860 +      %EM_GETNAME(key=OUTIMPORT, type=DATA);
+16861 +      %if %sysfunc(exist(&EM_USER_OUTIMPORT)) eq 1 %then %do;
+16863 +         %let validexist=0;
+16864 +         %if (("&EM_IMPORT_VALIDATE" ne "") AND (%sysfunc(exist(&EM_IMPORT_VALIDATE)) or %sysfunc(exist(&EM_IMPORT_VALIDATE,VIEW)))) %then %do;
+16865 +           %let validexist=1;
+16866 +         %end;
+16868 +         /* determine if vars exists - properties could indicate they are they but freeze=Y would mean the node wasn't retrained */
+16869 +         /* and the columns may not be generated                                                                                 */
+16870 +         %let em_tree_cvexists=;
+16871 +         %let em_tree_surrexists=.;
+16872 +         data _null_;
+16873 +            set &EM_USER_OUTIMPORT (obs=2) end=eof;
+16874 +            if eof then do ;
+16875 +               call symput("em_tree_cvexists" , strip(put(cvimportance,best.))) ;
+16876 +               call symput("em_tree_surrexists", strip(put(nsurrogates, best.)));
+16877 +            end;
+16878 +         run;
+16880 +         data &EM_USER_OUTIMPORT;
+16881 +            set &EM_USER_OUTIMPORT;
+16883 +            /* format columns based on Precison value specified */
+16884 +            format importance 15.&EM_PROPERTY_PRECISION
+16885 +                 %if &validexist %then %do;
+16886 +                   vimportance ratio 15.&EM_PROPERTY_PRECISION
+16887 +                 %end;
+16888 +                 %if "&EM_TREE_CVEXISTS" ne "." %then %do;
+16889 +                   cvimportance vimportance ratio 15.&EM_PROPERTY_PRECISION
+16890 +                 %end;
+16891 +            ;
+16892 +            label  NAME       = "%sysfunc(sasmsg(sashelp.dmine, meta_name_vlabel, noquote))"
+16893 +                 LABEL        = "%sysfunc(sasmsg(sashelp.dmine, meta_label_vlabel, noquote))"
+16894 +                 NRULES       = "%sysfunc(sasmsg(sashelp.dmine, rpt_nrules_vlabel, noquote))"
+16895 +                 IMPORTANCE   = "%sysfunc(sasmsg(sashelp.dmine, rpt_importance_vlabel, noquote))"
+16896 +                 %if "&em_tree_surrexists" ne "" %then %do;
+16897 +                   NSURROGATES  = "%sysfunc(sasmsg(sashelp.dmine, rpt_nsurrogates_vlabel, noquote))"
+16898 +                 %end;
+16899 +                 %if &validexist %then %do;
+16900 +                   VIMPORTANCE = "%sysfunc(sasmsg(sashelp.dmine, rpt_vimportance_vlabel, noquote))"
+16901 +                   RATIO       = "%sysfunc(sasmsg(sashelp.dmine, rpt_ratio_vlabel, noquote))"
+16902 +                 %end;
+16903 +                 %if "&EM_TREE_CVEXISTS" ne "" %then %do;
+16904 +                   VIMPORTANCE = "%sysfunc(sasmsg(sashelp.dmine, rpt_vimportance_vlabel, noquote))"
+16905 +                   CVIMPORTANCE =  "%sysfunc(sasmsg(sashelp.dmine, rpt_cvimport_vlabel, noquote))"
+16906 +                   CVRULES= "%sysfunc(sasmsg(sashelp.dmine, rpt_cvrules_vlabel, noquote))"
+16907 +                   RATIO = "%sysfunc(sasmsg(sashelp.dmine, rpt_ratio_vlabel, noquote))"
+16908 +                 %end;
+16909 +            ;
+16910 +         run;
+16912 +         %EM_REPORT(key=OUTIMPORT, viewtype=DATA, block=MODEL, description=IMPORTANCE, autodisplay=N);
+16913 +      %end;
+16914 +   %end;
+16916 +   %doendm:
+16917 +%mend em_tree_score;
+NOTE: %INCLUDE (level 1) ending.
+NOTE: Fileref TEMP has been deassigned.
+
+NOTE: The file FLOWREF is:
+      Filename=C:\Users\jy\Desktop\DataMiningProject\SASEM_Project\Workspaces\EMWS1\Tree\EMFLOWSCORE.sas,
+      RECFM=V,LRECL=20000,File Size (bytes)=0,
+      Last Modified=12Dec2019:15:33:53,
+      Create Time=12Dec2019:15:33:53
+
+NOTE: 232 records were written to the file FLOWREF.
+      The minimum record length was 1.
+      The maximum record length was 75.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.00 seconds
+      
+
+
+NOTE: The file PUBREF is:
+      Filename=C:\Users\jy\Desktop\DataMiningProject\SASEM_Project\Workspaces\EMWS1\Tree\EMPUBLISHSCORE.sas,
+      RECFM=V,LRECL=20000,File Size (bytes)=0,
+      Last Modified=12Dec2019:15:33:53,
+      Create Time=12Dec2019:15:33:53
+
+NOTE: 206 records were written to the file PUBREF.
+      The minimum record length was 1.
+      The maximum record length was 67.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.01 seconds
+      
+
+NOTE: Fileref TREEFLOW has been deassigned.
+NOTE: Fileref TREEPUB has been deassigned.
+
+NOTE: There were 1 observations read from the data set EMWS1.TREE_AUDIENCE_SCORE_P_DM.
+      WHERE _TYPE_='DECPRIOR';
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+
+NOTE: The file FLOWREF is:
+      Filename=C:\Users\jy\Desktop\DataMiningProject\SASEM_Project\Workspaces\EMWS1\Tree\EMFLOWSCORE.sas,
+      RECFM=V,LRECL=32767,File Size (bytes)=10469,
+      Last Modified=12Dec2019:15:33:53,
+      Create Time=12Dec2019:15:33:53
+
+NOTE: 1 record was written to the file FLOWREF.
+      The minimum record length was 12.
+      The maximum record length was 12.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+
+NOTE: The file PUBREF is:
+      Filename=C:\Users\jy\Desktop\DataMiningProject\SASEM_Project\Workspaces\EMWS1\Tree\EMPUBLISHSCORE.sas,
+      RECFM=V,LRECL=32767,File Size (bytes)=9411,
+      Last Modified=12Dec2019:15:33:53,
+      Create Time=12Dec2019:15:33:53
+
+NOTE: 1 record was written to the file PUBREF.
+      The minimum record length was 12.
+      The maximum record length was 12.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+NOTE: Fileref FLOWREF has been deassigned.
+NOTE: Fileref PUBREF has been deassigned.
+
+NOTE: The data set WORK.EM_METACHANGE has 1 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+
+NOTE: There were 1 observations read from the data set WORK.EM_METACHANGE.
+NOTE: The data set WORK.EM_METACHANGE has 2 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+
+NOTE: There were 2 observations read from the data set WORK.EM_METACHANGE.
+NOTE: The data set WORK.EM_METACHANGE has 3 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.00 seconds
+      
+
+
+NOTE: There were 3 observations read from the data set WORK.EM_METACHANGE.
+NOTE: The data set WORK.EM_METACHANGE has 4 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+
+NOTE: There were 4 observations read from the data set WORK.EM_METACHANGE.
+NOTE: The data set WORK.EM_METACHANGE has 5 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+
+NOTE: There were 5 observations read from the data set WORK.EM_METACHANGE.
+NOTE: The data set WORK.EM_METACHANGE has 6 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+
+NOTE: There were 6 observations read from the data set WORK.EM_METACHANGE.
+NOTE: The data set WORK.EM_METACHANGE has 7 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+
+NOTE: There were 7 observations read from the data set WORK.EM_METACHANGE.
+NOTE: The data set WORK.EM_METACHANGE has 8 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+
+NOTE: There were 8 observations read from the data set WORK.EM_METACHANGE.
+NOTE: The data set WORK.EM_METACHANGE has 9 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+
+NOTE: There were 9 observations read from the data set WORK.EM_METACHANGE.
+NOTE: The data set WORK.EM_METACHANGE has 10 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.01 seconds
+      
+
+
+NOTE: There were 10 observations read from the data set WORK.EM_METACHANGE.
+NOTE: The data set WORK.EM_METACHANGE has 11 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.01 seconds
+      
+
+
+NOTE: There were 11 observations read from the data set WORK.EM_METACHANGE.
+NOTE: The data set WORK.EM_METACHANGE has 12 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+
+NOTE: There were 12 observations read from the data set WORK.EM_METACHANGE.
+NOTE: The data set WORK.EM_METACHANGE has 13 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+
+NOTE: There were 13 observations read from the data set WORK.EM_METACHANGE.
+NOTE: The data set WORK.EM_METACHANGE has 14 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+
+NOTE: There were 14 observations read from the data set WORK.EM_METACHANGE.
+NOTE: The data set WORK.EM_METACHANGE has 15 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+
+NOTE: There were 15 observations read from the data set WORK.EM_METACHANGE.
+NOTE: The data set WORK.EM_METACHANGE has 16 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+
+NOTE: There were 16 observations read from the data set WORK.EM_METACHANGE.
+NOTE: The data set WORK.EM_METACHANGE has 17 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+
+NOTE: There were 17 observations read from the data set WORK.EM_METACHANGE.
+NOTE: The data set WORK.EM_METACHANGE has 18 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+
+NOTE: There were 18 observations read from the data set WORK.EM_METACHANGE.
+NOTE: The data set WORK.EM_METACHANGE has 19 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+
+NOTE: There were 19 observations read from the data set WORK.EM_METACHANGE.
+NOTE: The data set WORK.EM_METACHANGE has 20 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+
+NOTE: There were 20 observations read from the data set WORK.EM_METACHANGE.
+NOTE: The data set WORK.EM_METACHANGE has 21 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+
+NOTE: There were 21 observations read from the data set WORK.EM_METACHANGE.
+NOTE: The data set WORK.EM_METACHANGE has 22 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+
+NOTE: There were 22 observations read from the data set WORK.EM_METACHANGE.
+NOTE: The data set WORK.EM_METACHANGE has 23 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+
+NOTE: There were 23 observations read from the data set WORK.EM_METACHANGE.
+NOTE: The data set WORK.EM_METACHANGE has 24 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+
+NOTE: There were 24 observations read from the data set WORK.EM_METACHANGE.
+NOTE: The data set WORK.EM_METACHANGE has 25 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+
+NOTE: There were 2 observations read from the data set EMWS1.TREE_AUDIENCE_SCORE_P_DM.
+      WHERE _TYPE_='PREDICTED';
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+
+NOTE: There were 25 observations read from the data set WORK.EM_METACHANGE.
+NOTE: The data set WORK.EM_METACHANGE has 26 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+
+NOTE: There were 26 observations read from the data set WORK.EM_METACHANGE.
+NOTE: The data set WORK.EM_METACHANGE has 27 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.01 seconds
+      
+
+
+NOTE: Variable cvimportance is uninitialized.
+NOTE: Variable nsurrogates is uninitialized.
+NOTE: There were 2 observations read from the data set EMWS1.TREE_OUTIMPORT.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+
+NOTE: Variable NSURROGATES is uninitialized.
+NOTE: Variable CVIMPORTANCE is uninitialized.
+NOTE: Variable CVRULES is uninitialized.
+NOTE: There were 32 observations read from the data set EMWS1.TREE_OUTIMPORT.
+NOTE: The data set EMWS1.TREE_OUTIMPORT has 32 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.01 seconds
+      
+
+
+NOTE: The data set WORK.EM_USER_REPORT has 132 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.03 seconds
+      
+
+16918  
+16919  *------------------------------------------------------------*;
+16920  * End SCORE: Tree;
+16921  *------------------------------------------------------------*;
+
+16922  proc sort data=WORK.EM_METACHANGE;
+16923  by key uname;
+16924  run;
+
+NOTE: There were 27 observations read from the data set WORK.EM_METACHANGE.
+NOTE: The data set WORK.EM_METACHANGE has 27 observations and 9 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+16925  filename x "C:\Users\jy\Desktop\DataMiningProject\SASEM_Project\Workspaces\EMWS1\Tree\CDELTA_TRAIN.sas";
+16926  data _null_;
+16927  file x;
+16928  put 'if upcase(NAME) = "G" then do;';
+16929  put 'ROLE = "REJECTED";';
+16930  put 'end;';
+16931  put 'else ';
+16932  put 'if upcase(NAME) = "GENRE_ACTION" then do;';
+16933  put 'ROLE = "REJECTED";';
+16934  put 'end;';
+16935  put 'else ';
+16936  put 'if upcase(NAME) = "GENRE_ADVENTURE" then do;';
+16937  put 'ROLE = "REJECTED";';
+16938  put 'end;';
+16939  put 'else ';
+16940  put 'if upcase(NAME) = "GENRE_ANIMATIONMANGA" then do;';
+16941  put 'ROLE = "REJECTED";';
+16942  put 'end;';
+16943  put 'else ';
+16944  put 'if upcase(NAME) = "GENRE_ARTHOUSEINTER" then do;';
+16945  put 'ROLE = "REJECTED";';
+16946  put 'end;';
+16947  put 'else ';
+16948  put 'if upcase(NAME) = "GENRE_CLASSICSCULT" then do;';
+16949  put 'ROLE = "REJECTED";';
+16950  put 'end;';
+16951  put 'else ';
+16952  put 'if upcase(NAME) = "GENRE_COMEDY" then do;';
+16953  put 'ROLE = "REJECTED";';
+16954  put 'end;';
+16955  put 'else ';
+16956  put 'if upcase(NAME) = "GENRE_FAMILYKIDS" then do;';
+16957  put 'ROLE = "REJECTED";';
+16958  put 'end;';
+16959  put 'else ';
+16960  put 'if upcase(NAME) = "GENRE_FANTASY" then do;';
+16961  put 'ROLE = "REJECTED";';
+16962  put 'end;';
+16963  put 'else ';
+16964  put 'if upcase(NAME) = "GENRE_FITNESSSPORTS" then do;';
+16965  put 'ROLE = "REJECTED";';
+16966  put 'end;';
+16967  put 'else ';
+16968  put 'if upcase(NAME) = "GENRE_HORROR" then do;';
+16969  put 'ROLE = "REJECTED";';
+16970  put 'end;';
+16971  put 'else ';
+16972  put 'if upcase(NAME) = "GENRE_MUSICALPERFARTS" then do;';
+16973  put 'ROLE = "REJECTED";';
+16974  put 'end;';
+16975  put 'else ';
+16976  put 'if upcase(NAME) = "GENRE_ROMANCE" then do;';
+16977  put 'ROLE = "REJECTED";';
+16978  put 'end;';
+16979  put 'else ';
+16980  put 'if upcase(NAME) = "GENRE_SCI_FI" then do;';
+16981  put 'ROLE = "REJECTED";';
+16982  put 'end;';
+16983  put 'else ';
+16984  put 'if upcase(NAME) = "GENRE_SPECIAL_INTEREST" then do;';
+16985  put 'ROLE = "REJECTED";';
+16986  put 'end;';
+16987  put 'else ';
+16988  put 'if upcase(NAME) = "GENRE_WESTERN" then do;';
+16989  put 'ROLE = "REJECTED";';
+16990  put 'end;';
+16991  put 'else ';
+16992  put 'if upcase(NAME) = "IMP_FOREIGN_GROSS" then do;';
+16993  put 'ROLE = "REJECTED";';
+16994  put 'end;';
+16995  put 'else ';
+16996  put 'if upcase(NAME) = "IMP_MARKETS_MISSING" then do;';
+16997  put 'ROLE = "REJECTED";';
+16998  put 'end;';
+16999  put 'else ';
+17000  put 'if upcase(NAME) = "IMP_USER_RATING_COUNT" then do;';
+17001  put 'ROLE = "REJECTED";';
+17002  put 'end;';
+17003  put 'else ';
+17004  put 'if upcase(NAME) = "NC17" then do;';
+17005  put 'ROLE = "REJECTED";';
+17006  put 'end;';
+17007  put 'else ';
+17008  put 'if upcase(NAME) = "NR" then do;';
+17009  put 'ROLE = "REJECTED";';
+17010  put 'end;';
+17011  put 'else ';
+17012  put 'if upcase(NAME) = "PG" then do;';
+17013  put 'ROLE = "REJECTED";';
+17014  put 'end;';
+17015  put 'else ';
+17016  put 'if upcase(NAME) = "PG_13" then do;';
+17017  put 'ROLE = "REJECTED";';
+17018  put 'end;';
+17019  put 'else ';
+17020  put 'if upcase(NAME) = "Q_AUDIENCE_SCORE_POSITIVEFALSE" then do;';
+17021  put 'ROLE = "ASSESS";';
+17022  put 'end;';
+17023  put 'else ';
+17024  put 'if upcase(NAME) = "Q_AUDIENCE_SCORE_POSITIVETRUE" then do;';
+17025  put 'ROLE = "ASSESS";';
+17026  put 'end;';
+17027  put 'else ';
+17028  put 'if upcase(NAME) = "R" then do;';
+17029  put 'ROLE = "REJECTED";';
+17030  put 'end;';
+17031  put 'else ';
+17032  put 'if upcase(NAME) = "_NODE_" then do;';
+17033  put 'ROLE = "SEGMENT";';
+17034  put 'LEVEL = "NOMINAL";';
+17035  put 'end;';
+17036  run;
+
+NOTE: The file X is:
+      Filename=C:\Users\jy\Desktop\DataMiningProject\SASEM_Project\Workspaces\EMWS1\Tree\CDELTA_TRAIN.sas,
+      RECFM=V,LRECL=32767,File Size (bytes)=0,
+      Last Modified=12Dec2019:15:33:54,
+      Create Time=12Dec2019:15:31:20
+
+NOTE: 108 records were written to the file X.
+      The minimum record length was 4.
+      The maximum record length was 59.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+17037  filename x;
+NOTE: Fileref X has been deassigned.
+
+17038  filename emflow "C:\Users\jy\Desktop\DataMiningProject\SASEM_Project\Workspaces\EMWS1\Tree\EMFLOWSCORE.sas";
+17039  *------------------------------------------------------------*;
+17040  * Tree: Scoring DATA data;
+17041  *------------------------------------------------------------*;
+17042  data EMWS1.Tree_TRAIN
+17043  / view=EMWS1.Tree_TRAIN
+17044  ;
+17045  set EMWS1.Impt_TRAIN
+17046  ;
+17047  %inc emflow;
+NOTE: %INCLUDE (level 1) file EMFLOW is file C:\Users\jy\Desktop\DataMiningProject\SASEM_Project\Workspaces\EMWS1\Tree\EMFLOWSCORE.sas.
+17048 +****************************************************************;
+17049 +******             DECISION TREE SCORING CODE             ******;
+17050 +****************************************************************;
+17051 +
+17052 +******         LENGTHS OF NEW CHARACTER VARIABLES         ******;
+17053 +LENGTH F_audience_score_positive  $    5;
+17054 +LENGTH I_audience_score_positive  $    5;
+17055 +LENGTH U_audience_score_positive  $    5;
+17056 +LENGTH _WARN_  $    4;
+17057 +
+17058 +******              LABELS FOR NEW VARIABLES              ******;
+17059 +label _NODE_ = 'Node' ;
+17060 +label _LEAF_ = 'Leaf' ;
+17061 +label P_audience_score_positiveTrue =
+17062 +'Predicted: audience_score_positive=True' ;
+17063 +label P_audience_score_positiveFalse =
+17064 +'Predicted: audience_score_positive=False' ;
+17065 +label Q_audience_score_positiveTrue =
+17066 +'Unadjusted P: audience_score_positive=True' ;
+17067 +label Q_audience_score_positiveFalse =
+17068 +'Unadjusted P: audience_score_positive=False' ;
+17069 +label V_audience_score_positiveTrue =
+17070 +'Validated: audience_score_positive=True' ;
+17071 +label V_audience_score_positiveFalse =
+17072 +'Validated: audience_score_positive=False' ;
+17073 +label R_audience_score_positiveTrue =
+17074 +'Residual: audience_score_positive=True' ;
+17075 +label R_audience_score_positiveFalse =
+17076 +'Residual: audience_score_positive=False' ;
+17077 +label F_audience_score_positive = 'From: audience_score_positive' ;
+17078 +label I_audience_score_positive = 'Into: audience_score_positive' ;
+17079 +label U_audience_score_positive =
+17080 +'Unnormalized Into: audience_score_positive' ;
+17081 +label _WARN_ = 'Warnings' ;
+17082 +
+17083 +
+17084 +******      TEMPORARY VARIABLES FOR FORMATTED VALUES      ******;
+17085 +LENGTH _ARBFMT_5 $      5; DROP _ARBFMT_5;
+17086 +_ARBFMT_5 = ' '; /* Initialize to avoid warning. */
+17087 +LENGTH _ARBFMT_12 $     12; DROP _ARBFMT_12;
+17088 +_ARBFMT_12 = ' '; /* Initialize to avoid warning. */
+17089 +
+17090 +
+17091 +_ARBFMT_5 = PUT( audience_score_positive , $5.);
+17092 + %DMNORMCP( _ARBFMT_5, F_audience_score_positive );
+17093 +
+17094 +******             ASSIGN OBSERVATION TO NODE             ******;
+17095 +_ARBFMT_12 = PUT( genre_HistDocument , BEST12.);
+17096 + %DMNORMIP( _ARBFMT_12);
+17097 +IF _ARBFMT_12 IN ('1' ) THEN DO;
+17098 +  IF  NOT MISSING(tomatometer_count ) AND
+17099 +                    27.5 <= tomatometer_count  THEN DO;
+17100 +    _NODE_  =                    7;
+17101 +    _LEAF_  =                   11;
+17102 +    P_audience_score_positiveTrue  =     0.86184210526315;
+17103 +    P_audience_score_positiveFalse  =     0.13815789473684;
+17104 +    Q_audience_score_positiveTrue  =     0.86184210526315;
+17105 +    Q_audience_score_positiveFalse  =     0.13815789473684;
+17106 +    V_audience_score_positiveTrue  =     0.88079470198675;
+17107 +    V_audience_score_positiveFalse  =     0.11920529801324;
+17108 +    I_audience_score_positive  = 'TRUE' ;
+17109 +    U_audience_score_positive  = 'True' ;
+17110 +    END;
+17111 +  ELSE DO;
+17112 +    IF  NOT MISSING(IMP_total_gross ) AND
+17113 +      IMP_total_gross  <               4674.5 THEN DO;
+17114 +      _NODE_  =                   12;
+17115 +      _LEAF_  =                    9;
+17116 +      P_audience_score_positiveTrue  =                 0.36;
+17117 +      P_audience_score_positiveFalse  =                 0.64;
+17118 +      Q_audience_score_positiveTrue  =                 0.36;
+17119 +      Q_audience_score_positiveFalse  =                 0.64;
+17120 +      V_audience_score_positiveTrue  =     0.45833333333333;
+17121 +      V_audience_score_positiveFalse  =     0.54166666666666;
+17122 +      I_audience_score_positive  = 'FALSE' ;
+17123 +      U_audience_score_positive  = 'False' ;
+17124 +      END;
+17125 +    ELSE DO;
+17126 +      _NODE_  =                   13;
+17127 +      _LEAF_  =                   10;
+17128 +      P_audience_score_positiveTrue  =     0.68036529680365;
+17129 +      P_audience_score_positiveFalse  =     0.31963470319634;
+17130 +      Q_audience_score_positiveTrue  =     0.68036529680365;
+17131 +      Q_audience_score_positiveFalse  =     0.31963470319634;
+17132 +      V_audience_score_positiveTrue  =     0.67948717948717;
+17133 +      V_audience_score_positiveFalse  =     0.32051282051282;
+17134 +      I_audience_score_positive  = 'TRUE' ;
+17135 +      U_audience_score_positive  = 'True' ;
+17136 +      END;
+17137 +    END;
+17138 +  END;
+17139 +ELSE DO;
+17140 +  IF  NOT MISSING(tomatometer_count ) AND
+17141 +                   140.5 <= tomatometer_count  THEN DO;
+17142 +    IF  NOT MISSING(IMP_domestic_opening ) AND
+17143 +      IMP_domestic_opening  <            3169859.5 THEN DO;
+17144 +      _NODE_  =                   10;
+17145 +      _LEAF_  =                    6;
+17146 +      P_audience_score_positiveTrue  =     0.83660130718954;
+17147 +      P_audience_score_positiveFalse  =     0.16339869281045;
+17148 +      Q_audience_score_positiveTrue  =     0.83660130718954;
+17149 +      Q_audience_score_positiveFalse  =     0.16339869281045;
+17150 +      V_audience_score_positiveTrue  =      0.7361963190184;
+17151 +      V_audience_score_positiveFalse  =     0.26380368098159;
+17152 +      I_audience_score_positive  = 'TRUE' ;
+17153 +      U_audience_score_positive  = 'True' ;
+17154 +      END;
+17155 +    ELSE DO;
+17156 +      IF  NOT MISSING(IMP_domestic_gross ) AND
+17157 +                 100753420.5 <= IMP_domestic_gross  THEN DO;
+17158 +        _NODE_  =                   23;
+17159 +        _LEAF_  =                    8;
+17160 +        P_audience_score_positiveTrue  =     0.82926829268292;
+17161 +        P_audience_score_positiveFalse  =     0.17073170731707;
+17162 +        Q_audience_score_positiveTrue  =     0.82926829268292;
+17163 +        Q_audience_score_positiveFalse  =     0.17073170731707;
+17164 +        V_audience_score_positiveTrue  =                  0.8;
+17165 +        V_audience_score_positiveFalse  =                  0.2;
+17166 +        I_audience_score_positive  = 'TRUE' ;
+17167 +        U_audience_score_positive  = 'True' ;
+17168 +        END;
+17169 +      ELSE DO;
+17170 +        _NODE_  =                   22;
+17171 +        _LEAF_  =                    7;
+17172 +        P_audience_score_positiveTrue  =     0.45578231292517;
+17173 +        P_audience_score_positiveFalse  =     0.54421768707483;
+17174 +        Q_audience_score_positiveTrue  =     0.45578231292517;
+17175 +        Q_audience_score_positiveFalse  =     0.54421768707483;
+17176 +        V_audience_score_positiveTrue  =     0.45138888888888;
+17177 +        V_audience_score_positiveFalse  =     0.54861111111111;
+17178 +        I_audience_score_positive  = 'FALSE' ;
+17179 +        U_audience_score_positive  = 'False' ;
+17180 +        END;
+17181 +      END;
+17182 +    END;
+17183 +  ELSE DO;
+17184 +    _ARBFMT_12 = PUT( genre_DramaTele , BEST12.);
+17185 +     %DMNORMIP( _ARBFMT_12);
+17186 +    IF _ARBFMT_12 IN ('0' ) THEN DO;
+17187 +      _NODE_  =                    9;
+17188 +      _LEAF_  =                    5;
+17189 +      P_audience_score_positiveTrue  =     0.26086956521739;
+17190 +      P_audience_score_positiveFalse  =      0.7391304347826;
+17191 +      Q_audience_score_positiveTrue  =     0.26086956521739;
+17192 +      Q_audience_score_positiveFalse  =      0.7391304347826;
+17193 +      V_audience_score_positiveTrue  =      0.2832618025751;
+17194 +      V_audience_score_positiveFalse  =     0.71673819742489;
+17195 +      I_audience_score_positive  = 'FALSE' ;
+17196 +      U_audience_score_positive  = 'False' ;
+17197 +      END;
+17198 +    ELSE DO;
+17199 +      IF  NOT MISSING(IMP_runtime ) AND
+17200 +                       101.5 <= IMP_runtime  THEN DO;
+17201 +        _ARBFMT_12 = PUT( genre_ThrillMysSusp , BEST12.);
+17202 +         %DMNORMIP( _ARBFMT_12);
+17203 +        IF _ARBFMT_12 IN ('1' ) THEN DO;
+17204 +          IF  NOT MISSING(IMP_runtime ) AND
+17205 +                             119 <= IMP_runtime  THEN DO;
+17206 +            _NODE_  =                   43;
+17207 +            _LEAF_  =                    4;
+17208 +            P_audience_score_positiveTrue  =                  0.8;
+17209 +            P_audience_score_positiveFalse  =                  0.2;
+17210 +            Q_audience_score_positiveTrue  =                  0.8;
+17211 +            Q_audience_score_positiveFalse  =                  0.2;
+17212 +            V_audience_score_positiveTrue  =                0.625;
+17213 +            V_audience_score_positiveFalse  =                0.375;
+17214 +            I_audience_score_positive  = 'TRUE' ;
+17215 +            U_audience_score_positive  = 'True' ;
+17216 +            END;
+17217 +          ELSE DO;
+17218 +            _NODE_  =                   42;
+17219 +            _LEAF_  =                    3;
+17220 +            P_audience_score_positiveTrue  =     0.24444444444444;
+17221 +            P_audience_score_positiveFalse  =     0.75555555555555;
+17222 +            Q_audience_score_positiveTrue  =     0.24444444444444;
+17223 +            Q_audience_score_positiveFalse  =     0.75555555555555;
+17224 +            V_audience_score_positiveTrue  =     0.33870967741935;
+17225 +            V_audience_score_positiveFalse  =     0.66129032258064;
+17226 +            I_audience_score_positive  = 'FALSE' ;
+17227 +            U_audience_score_positive  = 'False' ;
+17228 +            END;
+17229 +          END;
+17230 +        ELSE DO;
+17231 +          _NODE_  =                   30;
+17232 +          _LEAF_  =                    2;
+17233 +          P_audience_score_positiveTrue  =     0.59011627906976;
+17234 +          P_audience_score_positiveFalse  =     0.40988372093023;
+17235 +          Q_audience_score_positiveTrue  =     0.59011627906976;
+17236 +          Q_audience_score_positiveFalse  =     0.40988372093023;
+17237 +          V_audience_score_positiveTrue  =     0.53571428571428;
+17238 +          V_audience_score_positiveFalse  =     0.46428571428571;
+17239 +          I_audience_score_positive  = 'TRUE' ;
+17240 +          U_audience_score_positive  = 'True' ;
+17241 +          END;
+17242 +        END;
+17243 +      ELSE DO;
+17244 +        _NODE_  =                   16;
+17245 +        _LEAF_  =                    1;
+17246 +        P_audience_score_positiveTrue  =     0.35911602209944;
+17247 +        P_audience_score_positiveFalse  =     0.64088397790055;
+17248 +        Q_audience_score_positiveTrue  =     0.35911602209944;
+17249 +        Q_audience_score_positiveFalse  =     0.64088397790055;
+17250 +        V_audience_score_positiveTrue  =     0.36007827788649;
+17251 +        V_audience_score_positiveFalse  =      0.6399217221135;
+17252 +        I_audience_score_positive  = 'FALSE' ;
+17253 +        U_audience_score_positive  = 'False' ;
+17254 +        END;
+17255 +      END;
+17256 +    END;
+17257 +  END;
+17258 +
+17259 +*****  RESIDUALS R_ *************;
+17260 +IF  F_audience_score_positive  NE 'TRUE'
+17261 +AND F_audience_score_positive  NE 'FALSE'  THEN DO;
+17262 +        R_audience_score_positiveTrue  = .;
+17263 +        R_audience_score_positiveFalse  = .;
+17264 + END;
+17265 + ELSE DO;
+17266 +       R_audience_score_positiveTrue  =  -P_audience_score_positiveTrue ;
+17267 +       R_audience_score_positiveFalse  =  -P_audience_score_positiveFalse ;
+17268 +       SELECT( F_audience_score_positive  );
+17269 +          WHEN( 'TRUE'  ) R_audience_score_positiveTrue  =
+17270 +        R_audience_score_positiveTrue  +1;
+17271 +          WHEN( 'FALSE'  ) R_audience_score_positiveFalse  =
+17272 +        R_audience_score_positiveFalse  +1;
+17273 +       END;
+17274 + END;
+17275 +
+17276 +****************************************************************;
+17277 +******          END OF DECISION TREE SCORING CODE         ******;
+17278 +****************************************************************;
+17279 +
+17280 +drop _LEAF_;
+NOTE: %INCLUDE (level 1) ending.
+17281  run;
+
+NOTE: DATA STEP view saved on file EMWS1.TREE_TRAIN.
+NOTE: A stored DATA STEP view cannot run under a different operating system.
+NOTE: View EMWS1.IMPT_TRAIN.VIEW used (Total process time):
+      real time           0.08 seconds
+      cpu time            0.04 seconds
+      
+NOTE: DATA statement used (Total process time):
+      real time           0.10 seconds
+      cpu time            0.04 seconds
+      
+
+17282  quit;
+17283  filename emflow;
+NOTE: Fileref EMFLOW has been deassigned.
+
+17284  filename emflow "C:\Users\jy\Desktop\DataMiningProject\SASEM_Project\Workspaces\EMWS1\Tree\EMFLOWSCORE.sas";
+17285  *------------------------------------------------------------*;
+17286  * Tree: Scoring VALIDATE data;
+17287  *------------------------------------------------------------*;
+17288  data EMWS1.Tree_VALIDATE
+17289  / view=EMWS1.Tree_VALIDATE
+17290  ;
+17291  set EMWS1.Impt_VALIDATE
+17292  ;
+17293  %inc emflow;
+NOTE: %INCLUDE (level 1) file EMFLOW is file C:\Users\jy\Desktop\DataMiningProject\SASEM_Project\Workspaces\EMWS1\Tree\EMFLOWSCORE.sas.
+17294 +****************************************************************;
+17295 +******             DECISION TREE SCORING CODE             ******;
+17296 +****************************************************************;
+17297 +
+17298 +******         LENGTHS OF NEW CHARACTER VARIABLES         ******;
+17299 +LENGTH F_audience_score_positive  $    5;
+17300 +LENGTH I_audience_score_positive  $    5;
+17301 +LENGTH U_audience_score_positive  $    5;
+17302 +LENGTH _WARN_  $    4;
+17303 +
+17304 +******              LABELS FOR NEW VARIABLES              ******;
+17305 +label _NODE_ = 'Node' ;
+17306 +label _LEAF_ = 'Leaf' ;
+17307 +label P_audience_score_positiveTrue =
+17308 +'Predicted: audience_score_positive=True' ;
+17309 +label P_audience_score_positiveFalse =
+17310 +'Predicted: audience_score_positive=False' ;
+17311 +label Q_audience_score_positiveTrue =
+17312 +'Unadjusted P: audience_score_positive=True' ;
+17313 +label Q_audience_score_positiveFalse =
+17314 +'Unadjusted P: audience_score_positive=False' ;
+17315 +label V_audience_score_positiveTrue =
+17316 +'Validated: audience_score_positive=True' ;
+17317 +label V_audience_score_positiveFalse =
+17318 +'Validated: audience_score_positive=False' ;
+17319 +label R_audience_score_positiveTrue =
+17320 +'Residual: audience_score_positive=True' ;
+17321 +label R_audience_score_positiveFalse =
+17322 +'Residual: audience_score_positive=False' ;
+17323 +label F_audience_score_positive = 'From: audience_score_positive' ;
+17324 +label I_audience_score_positive = 'Into: audience_score_positive' ;
+17325 +label U_audience_score_positive =
+17326 +'Unnormalized Into: audience_score_positive' ;
+17327 +label _WARN_ = 'Warnings' ;
+17328 +
+17329 +
+17330 +******      TEMPORARY VARIABLES FOR FORMATTED VALUES      ******;
+17331 +LENGTH _ARBFMT_5 $      5; DROP _ARBFMT_5;
+17332 +_ARBFMT_5 = ' '; /* Initialize to avoid warning. */
+17333 +LENGTH _ARBFMT_12 $     12; DROP _ARBFMT_12;
+17334 +_ARBFMT_12 = ' '; /* Initialize to avoid warning. */
+17335 +
+17336 +
+17337 +_ARBFMT_5 = PUT( audience_score_positive , $5.);
+17338 + %DMNORMCP( _ARBFMT_5, F_audience_score_positive );
+17339 +
+17340 +******             ASSIGN OBSERVATION TO NODE             ******;
+17341 +_ARBFMT_12 = PUT( genre_HistDocument , BEST12.);
+17342 + %DMNORMIP( _ARBFMT_12);
+17343 +IF _ARBFMT_12 IN ('1' ) THEN DO;
+17344 +  IF  NOT MISSING(tomatometer_count ) AND
+17345 +                    27.5 <= tomatometer_count  THEN DO;
+17346 +    _NODE_  =                    7;
+17347 +    _LEAF_  =                   11;
+17348 +    P_audience_score_positiveTrue  =     0.86184210526315;
+17349 +    P_audience_score_positiveFalse  =     0.13815789473684;
+17350 +    Q_audience_score_positiveTrue  =     0.86184210526315;
+17351 +    Q_audience_score_positiveFalse  =     0.13815789473684;
+17352 +    V_audience_score_positiveTrue  =     0.88079470198675;
+17353 +    V_audience_score_positiveFalse  =     0.11920529801324;
+17354 +    I_audience_score_positive  = 'TRUE' ;
+17355 +    U_audience_score_positive  = 'True' ;
+17356 +    END;
+17357 +  ELSE DO;
+17358 +    IF  NOT MISSING(IMP_total_gross ) AND
+17359 +      IMP_total_gross  <               4674.5 THEN DO;
+17360 +      _NODE_  =                   12;
+17361 +      _LEAF_  =                    9;
+17362 +      P_audience_score_positiveTrue  =                 0.36;
+17363 +      P_audience_score_positiveFalse  =                 0.64;
+17364 +      Q_audience_score_positiveTrue  =                 0.36;
+17365 +      Q_audience_score_positiveFalse  =                 0.64;
+17366 +      V_audience_score_positiveTrue  =     0.45833333333333;
+17367 +      V_audience_score_positiveFalse  =     0.54166666666666;
+17368 +      I_audience_score_positive  = 'FALSE' ;
+17369 +      U_audience_score_positive  = 'False' ;
+17370 +      END;
+17371 +    ELSE DO;
+17372 +      _NODE_  =                   13;
+17373 +      _LEAF_  =                   10;
+17374 +      P_audience_score_positiveTrue  =     0.68036529680365;
+17375 +      P_audience_score_positiveFalse  =     0.31963470319634;
+17376 +      Q_audience_score_positiveTrue  =     0.68036529680365;
+17377 +      Q_audience_score_positiveFalse  =     0.31963470319634;
+17378 +      V_audience_score_positiveTrue  =     0.67948717948717;
+17379 +      V_audience_score_positiveFalse  =     0.32051282051282;
+17380 +      I_audience_score_positive  = 'TRUE' ;
+17381 +      U_audience_score_positive  = 'True' ;
+17382 +      END;
+17383 +    END;
+17384 +  END;
+17385 +ELSE DO;
+17386 +  IF  NOT MISSING(tomatometer_count ) AND
+17387 +                   140.5 <= tomatometer_count  THEN DO;
+17388 +    IF  NOT MISSING(IMP_domestic_opening ) AND
+17389 +      IMP_domestic_opening  <            3169859.5 THEN DO;
+17390 +      _NODE_  =                   10;
+17391 +      _LEAF_  =                    6;
+17392 +      P_audience_score_positiveTrue  =     0.83660130718954;
+17393 +      P_audience_score_positiveFalse  =     0.16339869281045;
+17394 +      Q_audience_score_positiveTrue  =     0.83660130718954;
+17395 +      Q_audience_score_positiveFalse  =     0.16339869281045;
+17396 +      V_audience_score_positiveTrue  =      0.7361963190184;
+17397 +      V_audience_score_positiveFalse  =     0.26380368098159;
+17398 +      I_audience_score_positive  = 'TRUE' ;
+17399 +      U_audience_score_positive  = 'True' ;
+17400 +      END;
+17401 +    ELSE DO;
+17402 +      IF  NOT MISSING(IMP_domestic_gross ) AND
+17403 +                 100753420.5 <= IMP_domestic_gross  THEN DO;
+17404 +        _NODE_  =                   23;
+17405 +        _LEAF_  =                    8;
+17406 +        P_audience_score_positiveTrue  =     0.82926829268292;
+17407 +        P_audience_score_positiveFalse  =     0.17073170731707;
+17408 +        Q_audience_score_positiveTrue  =     0.82926829268292;
+17409 +        Q_audience_score_positiveFalse  =     0.17073170731707;
+17410 +        V_audience_score_positiveTrue  =                  0.8;
+17411 +        V_audience_score_positiveFalse  =                  0.2;
+17412 +        I_audience_score_positive  = 'TRUE' ;
+17413 +        U_audience_score_positive  = 'True' ;
+17414 +        END;
+17415 +      ELSE DO;
+17416 +        _NODE_  =                   22;
+17417 +        _LEAF_  =                    7;
+17418 +        P_audience_score_positiveTrue  =     0.45578231292517;
+17419 +        P_audience_score_positiveFalse  =     0.54421768707483;
+17420 +        Q_audience_score_positiveTrue  =     0.45578231292517;
+17421 +        Q_audience_score_positiveFalse  =     0.54421768707483;
+17422 +        V_audience_score_positiveTrue  =     0.45138888888888;
+17423 +        V_audience_score_positiveFalse  =     0.54861111111111;
+17424 +        I_audience_score_positive  = 'FALSE' ;
+17425 +        U_audience_score_positive  = 'False' ;
+17426 +        END;
+17427 +      END;
+17428 +    END;
+17429 +  ELSE DO;
+17430 +    _ARBFMT_12 = PUT( genre_DramaTele , BEST12.);
+17431 +     %DMNORMIP( _ARBFMT_12);
+17432 +    IF _ARBFMT_12 IN ('0' ) THEN DO;
+17433 +      _NODE_  =                    9;
+17434 +      _LEAF_  =                    5;
+17435 +      P_audience_score_positiveTrue  =     0.26086956521739;
+17436 +      P_audience_score_positiveFalse  =      0.7391304347826;
+17437 +      Q_audience_score_positiveTrue  =     0.26086956521739;
+17438 +      Q_audience_score_positiveFalse  =      0.7391304347826;
+17439 +      V_audience_score_positiveTrue  =      0.2832618025751;
+17440 +      V_audience_score_positiveFalse  =     0.71673819742489;
+17441 +      I_audience_score_positive  = 'FALSE' ;
+17442 +      U_audience_score_positive  = 'False' ;
+17443 +      END;
+17444 +    ELSE DO;
+17445 +      IF  NOT MISSING(IMP_runtime ) AND
+17446 +                       101.5 <= IMP_runtime  THEN DO;
+17447 +        _ARBFMT_12 = PUT( genre_ThrillMysSusp , BEST12.);
+17448 +         %DMNORMIP( _ARBFMT_12);
+17449 +        IF _ARBFMT_12 IN ('1' ) THEN DO;
+17450 +          IF  NOT MISSING(IMP_runtime ) AND
+17451 +                             119 <= IMP_runtime  THEN DO;
+17452 +            _NODE_  =                   43;
+17453 +            _LEAF_  =                    4;
+17454 +            P_audience_score_positiveTrue  =                  0.8;
+17455 +            P_audience_score_positiveFalse  =                  0.2;
+17456 +            Q_audience_score_positiveTrue  =                  0.8;
+17457 +            Q_audience_score_positiveFalse  =                  0.2;
+17458 +            V_audience_score_positiveTrue  =                0.625;
+17459 +            V_audience_score_positiveFalse  =                0.375;
+17460 +            I_audience_score_positive  = 'TRUE' ;
+17461 +            U_audience_score_positive  = 'True' ;
+17462 +            END;
+17463 +          ELSE DO;
+17464 +            _NODE_  =                   42;
+17465 +            _LEAF_  =                    3;
+17466 +            P_audience_score_positiveTrue  =     0.24444444444444;
+17467 +            P_audience_score_positiveFalse  =     0.75555555555555;
+17468 +            Q_audience_score_positiveTrue  =     0.24444444444444;
+17469 +            Q_audience_score_positiveFalse  =     0.75555555555555;
+17470 +            V_audience_score_positiveTrue  =     0.33870967741935;
+17471 +            V_audience_score_positiveFalse  =     0.66129032258064;
+17472 +            I_audience_score_positive  = 'FALSE' ;
+17473 +            U_audience_score_positive  = 'False' ;
+17474 +            END;
+17475 +          END;
+17476 +        ELSE DO;
+17477 +          _NODE_  =                   30;
+17478 +          _LEAF_  =                    2;
+17479 +          P_audience_score_positiveTrue  =     0.59011627906976;
+17480 +          P_audience_score_positiveFalse  =     0.40988372093023;
+17481 +          Q_audience_score_positiveTrue  =     0.59011627906976;
+17482 +          Q_audience_score_positiveFalse  =     0.40988372093023;
+17483 +          V_audience_score_positiveTrue  =     0.53571428571428;
+17484 +          V_audience_score_positiveFalse  =     0.46428571428571;
+17485 +          I_audience_score_positive  = 'TRUE' ;
+17486 +          U_audience_score_positive  = 'True' ;
+17487 +          END;
+17488 +        END;
+17489 +      ELSE DO;
+17490 +        _NODE_  =                   16;
+17491 +        _LEAF_  =                    1;
+17492 +        P_audience_score_positiveTrue  =     0.35911602209944;
+17493 +        P_audience_score_positiveFalse  =     0.64088397790055;
+17494 +        Q_audience_score_positiveTrue  =     0.35911602209944;
+17495 +        Q_audience_score_positiveFalse  =     0.64088397790055;
+17496 +        V_audience_score_positiveTrue  =     0.36007827788649;
+17497 +        V_audience_score_positiveFalse  =      0.6399217221135;
+17498 +        I_audience_score_positive  = 'FALSE' ;
+17499 +        U_audience_score_positive  = 'False' ;
+17500 +        END;
+17501 +      END;
+17502 +    END;
+17503 +  END;
+17504 +
+17505 +*****  RESIDUALS R_ *************;
+17506 +IF  F_audience_score_positive  NE 'TRUE'
+17507 +AND F_audience_score_positive  NE 'FALSE'  THEN DO;
+17508 +        R_audience_score_positiveTrue  = .;
+17509 +        R_audience_score_positiveFalse  = .;
+17510 + END;
+17511 + ELSE DO;
+17512 +       R_audience_score_positiveTrue  =  -P_audience_score_positiveTrue ;
+17513 +       R_audience_score_positiveFalse  =  -P_audience_score_positiveFalse ;
+17514 +       SELECT( F_audience_score_positive  );
+17515 +          WHEN( 'TRUE'  ) R_audience_score_positiveTrue  =
+17516 +        R_audience_score_positiveTrue  +1;
+17517 +          WHEN( 'FALSE'  ) R_audience_score_positiveFalse  =
+17518 +        R_audience_score_positiveFalse  +1;
+17519 +       END;
+17520 + END;
+17521 +
+17522 +****************************************************************;
+17523 +******          END OF DECISION TREE SCORING CODE         ******;
+17524 +****************************************************************;
+17525 +
+17526 +drop _LEAF_;
+NOTE: %INCLUDE (level 1) ending.
+17527  run;
+
+NOTE: DATA STEP view saved on file EMWS1.TREE_VALIDATE.
+NOTE: A stored DATA STEP view cannot run under a different operating system.
+NOTE: View EMWS1.IMPT_VALIDATE.VIEW used (Total process time):
+      real time           0.09 seconds
+      cpu time            0.06 seconds
+      
+NOTE: DATA statement used (Total process time):
+      real time           0.11 seconds
+      cpu time            0.07 seconds
+      
+
+17528  quit;
+17529  filename emflow;
+NOTE: Fileref EMFLOW has been deassigned.
+
+NOTE: View EMWS1.TREE_TRAIN.VIEW used (Total process time):
+      real time           0.12 seconds
+      cpu time            0.09 seconds
+      
+17531  proc sort data=WORK.EM_USER_REPORT;
+17532  by ID VIEW;
+17533  run;
+
+NOTE: There were 132 observations read from the data set WORK.EM_USER_REPORT.
+NOTE: The data set WORK.EM_USER_REPORT has 132 observations and 4 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+17534  *------------------------------------------------------------*;
+17535  * Tree: Computing metadata for TRAIN data;
+17536  *------------------------------------------------------------*;
+
+NOTE: View EMWS1.TREE_TRAIN.VIEW used (Total process time):
+      real time           0.13 seconds
+      cpu time            0.12 seconds
+      
+17992  data WORK.MODELTEMP_INFO;
+17993  set EMWS1.Tree_EMINFO;
+17994  where DATA='Tree' and KEY ^in('DECDATA', 'DECMETA', 'IMPORTANCE', 'MODEL');
+17995  run;
+
+NOTE: There were 0 observations read from the data set EMWS1.TREE_EMINFO.
+      WHERE (DATA='Tree') and KEY not in ('DECDATA', 'DECMETA', 'IMPORTANCE', 'MODEL');
+NOTE: The data set WORK.MODELTEMP_INFO has 0 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+17996  data EMWS1.Tree_EMINFO;
+17997  length TARGET KEY $32 DATA $43;
+17998  input TARGET KEY DATA $;
+17999  cards;
+
+NOTE: The data set EMWS1.TREE_EMINFO has 3 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+18003  run;
+18004  data EMWS1.Tree_EMINFO;
+18005  set EMWS1.Tree_EMINFO WORK.MODELTEMP_INFO;
+18006  run;
+
+NOTE: There were 3 observations read from the data set EMWS1.TREE_EMINFO.
+NOTE: There were 0 observations read from the data set WORK.MODELTEMP_INFO.
+NOTE: The data set EMWS1.TREE_EMINFO has 3 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.00 seconds
+      
+
+18007  proc sort data = EMWS1.Tree_EMINFO NOTHREADS;
+18008  by TARGET KEY;
+18009  run;
+
+NOTE: There were 3 observations read from the data set EMWS1.TREE_EMINFO.
+NOTE: The data set EMWS1.TREE_EMINFO has 3 observations and 3 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+NOTE: View EMWS1.TREE_TRAIN.VIEW used (Total process time):
+      real time           0.14 seconds
+      cpu time            0.11 seconds
+      
+NOTE: View EMWS1.TREE_VALIDATE.VIEW used (Total process time):
+      real time           0.15 seconds
+      cpu time            0.11 seconds
+      
