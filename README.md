@@ -98,7 +98,7 @@ Implications:
 - Shows approximately 50% True (good movie) and 50% False (bad movie).
 
 
-## Milestone 4(Interpretation of Data):
+## Milestone 4 (Interpretation of Data):
 ### Part 1: Data Partition 
 - Split the data into 50% training set and 50% validation set for modelling
 
@@ -110,6 +110,15 @@ Implications:
 
 ##### Subtree Assessment Plot
 - Determine how many leaves are sufficient to build a decision tree model that have a low misclassification rate, easily interepreted and understood for decision making.
+
+
+## Milestone 5 (Communication of Insights):
+Refer to Milestone 5 report:  
+<https://github.com/junyitt/DataMiningProject/blob/master/Milestone5_InsightsCommunication/Report_Milestone5.pdf>
+
+
+## Milestone 6 (Analyses and Recommendations):
+Refer to the final report.
 
 
 
